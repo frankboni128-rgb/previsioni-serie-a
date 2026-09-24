@@ -240,6 +240,47 @@ function grafico(storia, base){
 
 function euro(x){ return x == null ? "—" : x.toFixed(2).replace(".", ",") + " €"; }
 
+const pc1 = x => x == null ? "—" : (x > 0 ? "+" : "") + (x * 100).toFixed(1).replace(".", ",") + "%";
+const n4b = x => x == null ? "—" : x.toFixed(4).replace(".", ",");
+
+function sezioneEsperimenti(a){
+  const e = a.esperimenti || [];
+  if (!e.length) return "";
+  const chius = e.find(x => x.errore_chiusura_serie_a != null);
+  const cop = a.copertura_formazioni || {};
+  const copVals = Object.values(cop);
+  const copMedia = copVals.length ? Math.round(100 * copVals.reduce((t, v) => t + v, 0) / copVals.length) : null;
+  return `<h3>Cosa abbiamo provato</h3>
+    <p class="lead">Ogni riga aggiunge qualcosa al modello. Tutte le versioni sono provate sulle stesse partite di Serie A.
+    ${chius ? `Per confronto, l'errore delle quote di chiusura su queste partite è ${n4b(chius.errore_chiusura_serie_a)}.` : ""}
+    La resa è quella delle giocate con valore sopra il 5%, pagate alla quota di chiusura; il vantaggio sulla chiusura è positivo solo se il modello coglie davvero qualcosa che il mercato non vede.</p>
+    <div class="scroll"><table><thead><tr><th>Versione</th><th>Errore Serie A</th><th>Errore 5 campionati</th><th>Vantaggio sulla chiusura</th><th>Resa</th><th>100 € diventano</th></tr></thead><tbody>
+    ${e.map(x => `<tr${x.versione === a.versione ? ' class="valore"' : ""}><td>${esc(x.versione)}</td><td>${n4b(x.errore_serie_a)}</td>
+      <td>${n4b(x.errore_cinque)}</td>
+      <td class="${x.clv_serie_a > 0 ? "esito-ok" : "esito-ko"}">${pc1(x.clv_serie_a)}</td>
+      <td class="${x.resa_serie_a > 0 ? "esito-ok" : x.resa_serie_a < 0 ? "esito-ko" : ""}">${pc1(x.resa_serie_a)}</td>
+      <td>${x.kelly_serie_a == null ? "—" : euro(x.kelly_serie_a)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="avviso-val">Evidenziata la versione usata per le previsioni. Le formazioni ufficiali arrivano solo un'ora prima della partita, quindi quella versione serve a capire se valgono la pena, non per le previsioni quotidiane.${copMedia != null ? ` Formazioni disponibili per il ${copMedia}% delle partite di test.` : ""}</p>`;
+}
+
+function sezionePinnacle(a){
+  const p = a.pinnacle;
+  if (!p) return "";
+  const tab = (rows, titolo) => rows && rows.length ? `<p class="lead"><b>${titolo}</b></p><div class="scroll"><table><thead><tr><th>Scarto minimo</th><th>Giocate</th><th>Resa</th><th>Vantaggio sulla chiusura</th></tr></thead><tbody>
+    ${rows.map(r => `<tr><td>${esc(r.soglia.replace(">", "> "))}</td><td>${r.giocate}</td>
+      <td class="${r.resa > 0 ? "esito-ok" : r.resa < 0 ? "esito-ko" : ""}">${pc1(r.resa)}</td>
+      <td class="${r.clv > 0 ? "esito-ok" : r.clv < 0 ? "esito-ko" : ""}">${pc1(r.clv)}</td></tr>`).join("")}</tbody></table></div>` : "";
+  return `<h3>Pinnacle contro gli altri bookmaker</h3>
+    <p class="lead">Nessun modello: si gioca quando la quota di un bookmaker è più alta di quella giusta secondo Pinnacle, il bookmaker più preciso.
+    Stagioni ${a.stagioni_test.join(", ")}, vincite pagate alla quota di chiusura dello stesso bookmaker.</p>
+    ${tab(p.bet365_serie_a, "Serie A, quote Bet365")}
+    ${tab(p.migliore_serie_a, "Serie A, migliore quota del mercato")}
+    ${tab(p.bet365_cinque, "5 campionati, quote Bet365")}
+    ${tab(p.migliore_cinque, "5 campionati, migliore quota del mercato")}
+    <p class="avviso-val">La "migliore quota" è la più alta tra tutti i bookmaker censiti: per ottenerla servono conti su molti siti, e i bookmaker italiani non sono inclusi.</p>`;
+}
+
 function sezioneStagioni(a){
   const r = a.per_stagione || [];
   if (!r.length) return "";
@@ -327,6 +368,8 @@ function vistaFiducia(){
     <p class="lead">Una unità su ogni giocata in cui la quota del bookmaker superava la quota giusta del modello.</p>
     <h3>1-X-2</h3>${tabSim(a.sim_1x2 || [])}
     <h3>Under/Over 2.5</h3>${tabSim(a.sim_ou || [])}
+    ${sezioneEsperimenti(a)}
+    ${sezionePinnacle(a)}
     ${sezioneStagioni(a)}
     ${sezioneChiusura(a)}
     ${sezioneKelly(a)}
