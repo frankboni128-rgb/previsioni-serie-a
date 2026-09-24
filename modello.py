@@ -273,7 +273,8 @@ def num_valore(t):
 valori_ora = pd.Series(dtype=float)
 try:
     url = f"https://www.transfermarkt.com/serie-a/startseite/wettbewerb/IT1/saison_id/{STAGIONE_CORRENTE}"
-    r = requests.get(url, headers=UA, timeout=30)
+    r = requests.get(url, headers=dict(UA, **{"Accept": "text/html,application/xhtml+xml",
+                                               "Accept-Language": "it-IT,it;q=0.9,en;q=0.8"}), timeout=30)
     r.raise_for_status()
     tab_tm = BeautifulSoup(r.text, "html.parser").select_one("table.items")
     righe = []
@@ -296,8 +297,27 @@ try:
     print((ora.set_index("tm_nome")[["squadra", "valore"]].assign(valore=lambda x: (x.valore / 1e6).round(1))).to_string())
     valori_ora = ora.dropna(subset=["squadra"]).set_index("squadra").valore
 except Exception as e:
-    print("Valori attuali non disponibili:", e, "→ per la prossima giornata userò il modello senza valori")
-    NOTE.append("Valori di mercato attuali (Transfermarkt) non disponibili: previsioni senza valori delle rose.")
+    print("Transfermarkt non raggiungibile:", e)
+
+# Integrazione con il file docs/valori_rose.csv (aggiornato a mano dopo ogni sessione di mercato)
+F_VAL = "docs/valori_rose.csv"
+squadre_correnti = set(df.casa[df.stagione == COD_CORRENTE]) | set(df.trasf[df.stagione == COD_CORRENTE])
+if os.path.exists(F_VAL):
+    vf = pd.read_csv(F_VAL)
+    vf["squadra"] = vf["squadra"].astype(str).str.strip()
+    sconosciute_vf = sorted(set(vf.squadra) - squadre_correnti)
+    if sconosciute_vf:
+        NOTE.append("Nel file valori_rose.csv questi nomi non corrispondono a squadre della Serie A attuale: "
+                    + ", ".join(sconosciute_vf) + ". Controlla come sono scritti.")
+    vf_s = vf.set_index("squadra")["valore_milioni"].astype(float) * 1e6
+    valori_ora = pd.concat([valori_ora, vf_s[[s_ for s_ in vf_s.index if s_ not in valori_ora.index]]])
+    agg = pd.to_datetime(vf["aggiornato"], errors="coerce").max()
+    if pd.notna(agg) and (oggi - agg).days > 150:
+        NOTE.append(f"Il file valori_rose.csv è fermo al {agg.strftime('%d/%m/%Y')}: conviene aggiornarlo.")
+    print(f"Valori rose da file ({F_VAL}):", len(vf_s))
+manca_val = sorted(squadre_correnti - set(valori_ora.index))
+if manca_val:
+    NOTE.append("Valore della rosa mancante per: " + ", ".join(manca_val) + ". Le loro partite sono previste senza valori di mercato.")
 
 fm = df.futura
 df.loc[fm, "diff_valore"] = (np.log(df.loc[fm, "casa"].map(valori_ora)) - np.log(df.loc[fm, "trasf"].map(valori_ora))).values
