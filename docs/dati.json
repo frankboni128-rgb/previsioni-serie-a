@@ -1,5 +1,5 @@
 {
- "aggiornato": "2026-09-24 14:32",
+ "aggiornato": "2026-09-24 15:40",
  "stagione": "2026/27",
  "note": [
   "Nessuna partita in programma nei prossimi giorni (pausa o calendario non ancora pubblicato)."
@@ -14,9 +14,10 @@
   ],
   "partite_test": 1134,
   "x12": {
-   "log_loss_modello": 0.9741,
+   "log_loss_modello": 0.9584,
    "log_loss_bookmaker": 0.968,
-   "esito_azzeccato_modello": 0.527,
+   "log_loss_senza_quote": 0.9741,
+   "esito_azzeccato_modello": 0.553,
    "esito_azzeccato_bookmaker": 0.54
   },
   "ou25": [
@@ -39,67 +40,71 @@
    {
     "modello": "Bookmaker",
     "log_loss": 0.6865
+   },
+   {
+    "modello": "Modello + quote",
+    "log_loss": 0.6872
    }
   ],
-  "ou_scelto": "Modello tarato (misto)",
+  "ou_scelto": "Modello + quote",
   "sim_1x2": [
    {
     "soglia_valore": ">0%",
-    "giocate": 1301,
-    "vinte": 421,
-    "profitto_unita": -22.3,
-    "ROI": "-1.7%"
+    "giocate": 1117,
+    "vinte": 429,
+    "profitto_unita": 79.6,
+    "ROI": "+7.1%"
    },
    {
     "soglia_valore": ">5%",
-    "giocate": 917,
-    "vinte": 269,
-    "profitto_unita": -74.2,
-    "ROI": "-8.1%"
+    "giocate": 735,
+    "vinte": 267,
+    "profitto_unita": 73.5,
+    "ROI": "+10.0%"
    },
    {
     "soglia_valore": ">10%",
-    "giocate": 600,
-    "vinte": 160,
-    "profitto_unita": -47.6,
-    "ROI": "-7.9%"
+    "giocate": 443,
+    "vinte": 158,
+    "profitto_unita": 83.9,
+    "ROI": "+19.0%"
    },
    {
     "soglia_valore": ">20%",
-    "giocate": 233,
-    "vinte": 55,
-    "profitto_unita": -20.0,
-    "ROI": "-8.6%"
+    "giocate": 127,
+    "vinte": 37,
+    "profitto_unita": 15.6,
+    "ROI": "+12.3%"
    }
   ],
   "sim_ou": [
    {
     "soglia_valore": ">0%",
-    "giocate": 738,
-    "vinte": 372,
-    "profitto_unita": -5.4,
-    "ROI": "-0.7%"
+    "giocate": 9,
+    "vinte": 6,
+    "profitto_unita": 2.5,
+    "ROI": "+27.7%"
    },
    {
     "soglia_valore": ">5%",
-    "giocate": 369,
-    "vinte": 173,
-    "profitto_unita": -16.4,
-    "ROI": "-4.4%"
+    "giocate": 0,
+    "vinte": 0,
+    "profitto_unita": 0.0,
+    "ROI": "—"
    },
    {
     "soglia_valore": ">10%",
-    "giocate": 165,
-    "vinte": 67,
-    "profitto_unita": -20.3,
-    "ROI": "-12.3%"
+    "giocate": 0,
+    "vinte": 0,
+    "profitto_unita": 0.0,
+    "ROI": "—"
    },
    {
     "soglia_valore": ">20%",
-    "giocate": 21,
-    "vinte": 7,
-    "profitto_unita": -4.1,
-    "ROI": "-19.8%"
+    "giocate": 0,
+    "vinte": 0,
+    "profitto_unita": 0.0,
+    "ROI": "—"
    }
   ]
  },
