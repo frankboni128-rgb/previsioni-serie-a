@@ -21,7 +21,7 @@ pd.set_option("display.width", 200)
 pd.set_option("display.max_columns", 30)
 PRIMA_STAGIONE, STAGIONE_CORRENTE = 2008, 2026          # 2026 = stagione 2026/27
 INIZIO_MODELLI = "1011"
-TEST_STAGIONI = ["2324", "2425", "2526"]
+TEST_STAGIONI = ["1920", "2021", "2122", "2223", "2324", "2425", "2526"]   # 7 stagioni: dal 2019/20 ci sono anche le quote di chiusura
 PRIMO_TEST = TEST_STAGIONI[0]
 PRIMA_XG = 2014
 FINESTRA_GG, XI, HALFLIFE_XG, MAXG = 730, 0.002, 8, 10
@@ -41,11 +41,16 @@ COD_CORRENTE = codice(STAGIONE_CORRENTE)
 # ==== Storico Serie A (risultati + quote 1X2 e Under/Over 2.5)
 QUOTE_1X2 = [("B365H", "B365D", "B365A"), ("AvgH", "AvgD", "AvgA"), ("BbAvH", "BbAvD", "BbAvA"), ("PSH", "PSD", "PSA")]
 QUOTE_OU = [("B365>2.5", "B365<2.5"), ("Avg>2.5", "Avg<2.5"), ("BbAv>2.5", "BbAv<2.5"), ("P>2.5", "P<2.5")]
+# quote di chiusura (subito prima del fischio d'inizio), disponibili dal 2019/20
+CHIUSURA_PRECISA = [("PSCH", "PSCD", "PSCA"), ("AvgCH", "AvgCD", "AvgCA"), ("B365CH", "B365CD", "B365CA")]
+CHIUSURA_B365 = [("B365CH", "B365CD", "B365CA")]
+COL_QUOTE = ["q1", "qX", "q2", "q_over", "q_under", "qs1", "qsX", "qs2", "qc1", "qcX", "qc2"]
 
 def leggi_quote(raw, out):
-    for dst in ["q1", "qX", "q2", "q_over", "q_under"]:
+    for dst in COL_QUOTE:
         out[dst] = np.nan
-    for lista, dsts in [(QUOTE_1X2, ["q1", "qX", "q2"]), (QUOTE_OU, ["q_over", "q_under"])]:
+    for lista, dsts in [(QUOTE_1X2, ["q1", "qX", "q2"]), (QUOTE_OU, ["q_over", "q_under"]),
+                        (CHIUSURA_PRECISA, ["qs1", "qsX", "qs2"]), (CHIUSURA_B365, ["qc1", "qcX", "qc2"])]:
         for cols in lista:
             if all(c in raw for c in cols):
                 for dst, src in zip(dsts, cols):
@@ -97,7 +102,7 @@ if PARTITE_MANUALI:
         stagione=COD_CORRENTE, data=lambda x: pd.to_datetime(x.data))
     fut = pd.concat([fut, man], ignore_index=True)
 if fut.empty:
-    fut = pd.DataFrame(columns=["stagione", "data", "casa", "trasf", "q1", "qX", "q2", "q_over", "q_under"])
+    fut = pd.DataFrame(columns=["stagione", "data", "casa", "trasf"] + COL_QUOTE)
     fut["data"] = pd.to_datetime(fut["data"])
     print("Nessuna partita da prevedere.")
 fut = fut[fut.data >= oggi].drop_duplicates(["casa", "trasf"])
@@ -111,7 +116,7 @@ print(f"Partite da prevedere: {len(fut)}", "| nomi non riconosciuti:", sconosciu
 print(fut[["data", "casa", "trasf", "q1", "qX", "q2", "q_over", "q_under"]].to_string(index=False))
 
 df = pd.concat([giocate, fut], ignore_index=True).sort_values(["data", "casa"]).reset_index(drop=True)
-for c in ["gol_c", "gol_t", "q1", "qX", "q2", "q_over", "q_under"]:
+for c in ["gol_c", "gol_t"] + COL_QUOTE:
     df[c] = pd.to_numeric(df[c], errors="coerce")
 df["futura"] = df["futura"].astype(bool)
 df["esito"] = np.where(df.futura, None,
@@ -491,15 +496,17 @@ tab_ou.loc["Modello + quote", "prob_media_over"] = round(np.nanmean(risultati_ou
 MODO_OU = "Modello + quote"
 print(tab_ou.to_string())
 
-def simula(prob, quote, vinte, soglie=(0.0, 0.05, 0.10, 0.20)):
-    """Punta 1 unità ogni volta che probabilità × quota − 1 supera la soglia."""
+def simula(prob, quote, vinte, soglie=(0.0, 0.05, 0.10, 0.20), paga=None):
+    """Punta 1 unità ogni volta che probabilità × quota − 1 supera la soglia.
+    'paga' = quota a cui la giocata viene davvero pagata (es. quota di chiusura); di default la stessa."""
     prob, quote, vinte = np.asarray(prob, float), np.asarray(quote, float), np.asarray(vinte, bool)
+    paga = quote if paga is None else np.where(np.isfinite(np.asarray(paga, float)), np.asarray(paga, float), quote)
     righe = []
     for s in soglie:
         ev_ = prob * quote - 1
         punta = (ev_ > s) & np.isfinite(quote)
         n = int(punta.sum())
-        guad = np.where(vinte[punta], quote[punta] - 1, -1).sum() if n else 0.0
+        guad = np.where(vinte[punta], paga[punta] - 1, -1).sum() if n else 0.0
         righe.append({"soglia_valore": f">{s:.0%}", "giocate": n, "vinte": int(vinte[punta].sum()),
                       "profitto_unita": round(guad, 1), "ROI": f"{guad / n:+.1%}" if n else "—"})
     return pd.DataFrame(righe)
@@ -516,6 +523,92 @@ SIM_OU = simula(np.column_stack([po, 1 - po]).ravel(), qo.ravel(),
                 np.column_stack([ou.over == 1, ou.over == 0]).ravel())
 print(SIM_OU.to_string(index=False))
 print("\nROI negativo = in quelle stagioni si sarebbe perso. Con poche giocate il risultato è molto incerto.")
+
+# ==== Verifica contro le quote di chiusura
+qs = tt[["qs1", "qs2", "qsX"]].values          # ordine 1, 2, X
+qc = tt[["qc1", "qc2", "qcX"]].values
+ok_c = np.isfinite(qs).all(axis=1)
+inv_s = 1 / qs
+p_chius = inv_s / inv_s.sum(axis=1, keepdims=True)
+CHIUS = {"partite": int(ok_c.sum())}
+if ok_c.sum() >= 100:
+    CHIUS["log_loss_modello"] = round(float(log_loss(tt.esito[ok_c], P_comb[ok_c], labels=CLASSI)), 4)
+    CHIUS["log_loss_chiusura"] = round(float(log_loss(tt.esito[ok_c], p_chius[ok_c], labels=CLASSI)), 4)
+    # "closing line value": la quota presa batte la quota giusta di chiusura?
+    for soglia in (0.0, 0.05):
+        ev_ = P_comb * q - 1
+        pk = (ev_ > soglia) & np.isfinite(q) & ok_c[:, None]
+        if pk.sum():
+            CHIUS[f"clv_{int(soglia*100)}"] = round(float((q[pk] * p_chius[pk]).mean() - 1), 4)
+            CHIUS[f"giocate_clv_{int(soglia*100)}"] = int(pk.sum())
+    SIM_CHIUS = simula(P_comb.ravel(), q.ravel(), vinte.ravel(), paga=qc.ravel())
+    print("\nContro la chiusura:", CHIUS)
+    print("Simulazione 1-X-2 pagata alla quota di chiusura Bet365:")
+    print(SIM_CHIUS.to_string(index=False))
+else:
+    SIM_CHIUS = pd.DataFrame()
+
+# ==== Piano di budget (criterio di Kelly prudente) sulle stagioni di test
+FRAZ_KELLY, MAX_GIOCATA, MAX_GIORNO = 0.25, 0.05, 0.30
+
+def frazioni_kelly(p, quote):
+    """Per ogni partita: la giocata 1-X-2 con più vantaggio e la % di budget (Kelly/4, max 5%)."""
+    ev_ = p * quote - 1
+    ev_ = np.where(np.isfinite(ev_), ev_, -1)
+    k = ev_.argmax(axis=1)
+    e = ev_[np.arange(len(p)), k]
+    qk = quote[np.arange(len(p)), k]
+    f = np.where(e > 0, np.minimum(FRAZ_KELLY * e / (qk - 1), MAX_GIOCATA), 0.0)
+    return k, f, e
+
+def simula_kelly(paga, budget=100.0):
+    k, f, _ = frazioni_kelly(P_comb, q)
+    paga = np.where(np.isfinite(paga), paga, q)
+    d = pd.DataFrame({"data": tt.data.values, "f": f, "vinta": vinte[np.arange(len(k)), k],
+                      "quota": paga[np.arange(len(k)), k]})
+    banca, picco, ribasso, minimo, n, vinte_n, storia = budget, budget, 0.0, budget, 0, 0, []
+    for giorno, g in d.groupby("data", sort=True):
+        g = g[g.f > 0]
+        if g.empty:
+            continue
+        scala = min(1.0, MAX_GIORNO / g.f.sum())
+        puntate = banca * g.f.values * scala
+        banca += np.where(g.vinta.values, puntate * (g.quota.values - 1), -puntate).sum()
+        n += len(g); vinte_n += int(g.vinta.sum())
+        picco = max(picco, banca); minimo = min(minimo, banca); ribasso = max(ribasso, 1 - banca / picco)
+        storia.append([str(pd.Timestamp(giorno).date()), round(float(banca), 2)])
+    return {"budget_iniziale": budget, "finale": round(float(banca), 2), "giocate": n, "vinte": vinte_n,
+            "minimo": round(float(minimo), 2), "ribasso_massimo": round(float(ribasso), 3), "andamento": storia}
+
+KELLY = {"quote_anticipo": simula_kelly(q), "quote_chiusura": simula_kelly(qc)}
+
+# ==== Risultati stagione per stagione (per vedere se il vantaggio è costante)
+PER_STAGIONE = []
+ev5 = P_comb * q - 1
+for st_ in TEST_STAGIONI:
+    m_ = (tt.stagione == st_).values
+    if m_.sum() < 50:
+        continue
+    riga = {"stagione": f"20{st_[:2]}/{st_[2:]}", "partite": int(m_.sum()),
+            "errore_modello": round(float(log_loss(tt.esito[m_], P_comb[m_], labels=CLASSI)), 4),
+            "errore_bookmaker": round(float(log_loss(tt.esito[m_], P_book[m_], labels=CLASSI)), 4)}
+    mc_ = m_ & ok_c
+    if mc_.sum() >= 50:
+        riga["errore_chiusura"] = round(float(log_loss(tt.esito[mc_], p_chius[mc_], labels=CLASSI)), 4)
+    pk = (ev5 > 0.05) & np.isfinite(q) & m_[:, None]
+    n_ = int(pk.sum())
+    pay = np.where(np.isfinite(qc), qc, q)
+    riga["giocate_valore"] = n_
+    riga["resa_valore"] = round(float(np.where(vinte[pk], pay[pk] - 1, -1).sum() / n_), 3) if n_ else None
+    PER_STAGIONE.append(riga)
+print(pd.DataFrame(PER_STAGIONE).to_string(index=False))
+for nome_k, r_k in KELLY.items():
+    print(f"Kelly ({nome_k}): 100 → {r_k['finale']} | giocate {r_k['giocate']} | minimo {r_k['minimo']} | ribasso max {r_k['ribasso_massimo']:.0%}")
+PIANO_ATTIVO = (KELLY["quote_chiusura"]["finale"] > 100 and CHIUS.get("clv_0", -1) > 0
+                and CHIUS.get("log_loss_modello", 9) < CHIUS.get("log_loss_chiusura", 0) + 0.005)
+MOTIVO_PIANO = ("Il test sulle stagioni passate è positivo anche contro le quote di chiusura." if PIANO_ATTIVO else
+                "Piano disattivato: il test sulle stagioni passate non mostra un vantaggio solido contro le quote di chiusura.")
+print(MOTIVO_PIANO)
 
 # ==== Previsioni per la prossima giornata
 fin = df[df.esito.notna() & (df.stagione >= prima_train)]
@@ -560,7 +653,7 @@ def mercati(P):
 def num(x, nd=4):
     return None if x is None or (isinstance(x, float) and not np.isfinite(x)) or pd.isna(x) else round(float(x), nd)
 
-partite, righe_csv, righe_storico = [], [], []
+partite, righe_csv, righe_storico, piano = [], [], [], []
 for r in df[df.futura].itertuples():
     usa_val = not pd.isna(r.diff_valore)
     usa_book = not pd.isna(r.book_1v2)
@@ -577,6 +670,17 @@ for r in df[df.futura].itertuples():
     else:
         P = tabella_tarata(gol_totali(r, MODO_GOL), pc[0], pc[1], RHO["gol"])
     ms = mercati(P)
+    ms.update({("1X2", "1"): pc[0], ("1X2", "X"): pc[2], ("1X2", "2"): pc[1],
+               ("Doppia chance", "1X"): pc[0] + pc[2], ("Doppia chance", "X2"): pc[2] + pc[1],
+               ("Doppia chance", "12"): pc[0] + pc[1]})
+    quote_r = np.array([[r.q1, r.q2, r.qX]], dtype=float)
+    if np.isfinite(quote_r).all():
+        kk, ff, ee = frazioni_kelly(np.array([pc]), quote_r)
+        if ff[0] > 0:
+            piano.append({"partita": f"{r.casa} - {r.trasf}", "data": str(r.data.date()),
+                          "esito": ["1", "2", "X"][kk[0]], "p": round(float(pc[kk[0]]), 4),
+                          "quota": round(float(quote_r[0, kk[0]]), 2), "valore": round(float(ee[0]), 3),
+                          "percentuale": float(ff[0])})
     book = {("1X2", "1"): r.q1, ("1X2", "X"): r.qX, ("1X2", "2"): r.q2,
             ("Under/Over", "Over 2.5"): r.q_over, ("Under/Over", "Under 2.5"): r.q_under}
     per_mercato = {}
@@ -604,6 +708,9 @@ for r in df[df.futura].itertuples():
                           "pick_quota": miglior[2]["quota_book"] if miglior and miglior[0] > 0.05 else np.nan,
                           "pick_valore": miglior[0] if miglior and miglior[0] > 0.05 else np.nan})
 print(f"Previsioni calcolate: {len(partite)}")
+tot_piano = sum(g["percentuale"] for g in piano)
+for g in piano:
+    g["percentuale"] = round(g["percentuale"] * min(1.0, MAX_GIORNO / tot_piano), 4) if tot_piano else 0
 
 # ==== Storico: salva le previsioni e confrontale con i risultati
 os.makedirs("docs", exist_ok=True)
@@ -678,6 +785,8 @@ dati = {
     "note": NOTE,
     "partite": sorted(partite, key=lambda p: (p["data"], p["ora"])),
     "valore": valore,
+    "piano": {"attivo": bool(PIANO_ATTIVO), "motivo": MOTIVO_PIANO, "giocate": piano if PIANO_ATTIVO else [],
+              "regole": {"frazione_kelly": FRAZ_KELLY, "max_giocata": MAX_GIOCATA, "max_giorno": MAX_GIORNO}},
     "affidabilita": {
         "stagioni_test": [f"20{s_[:2]}/{s_[2:]}" for s_ in TEST_STAGIONI],
         "partite_test": int(len(tt)),
@@ -687,6 +796,9 @@ dati = {
         "ou25": [{"modello": k, "log_loss": float(v.log_loss)} for k, v in tab_ou.dropna(subset=["log_loss"]).iterrows()],
         "ou_scelto": MODO_OU,
         "sim_1x2": tab_json(SIM_1X2), "sim_ou": tab_json(SIM_OU),
+        "chiusura": {**CHIUS, "sim": tab_json(SIM_CHIUS) if len(SIM_CHIUS) else []},
+        "kelly": KELLY,
+        "per_stagione": PER_STAGIONE,
     },
     "storico": {"riepilogo": riep_storico, "ultime": ultime_storico},
 }

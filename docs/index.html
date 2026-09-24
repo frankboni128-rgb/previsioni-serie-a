@@ -93,6 +93,12 @@ p.lead{margin:0 0 12px;max-width:62ch}
 .cifre b{display:block;font:700 1.7rem/1 var(--cond);font-variant-numeric:tabular-nums}
 .cifre span{font-size:.82rem;color:var(--tenue)}
 .esito-ok{color:var(--ok);font-weight:600}.esito-ko{color:var(--segno);font-weight:600}
+figure.grafico{margin:12px 0;border:2px solid var(--inchiostro);padding:10px 10px 4px}
+figure.grafico svg{width:100%;height:auto;display:block}
+figure.grafico figcaption{font-size:.82rem;color:var(--tenue);padding:6px 0 4px}
+.linea{fill:none;stroke:var(--inchiostro);stroke-width:2}
+.base{stroke:var(--segno);stroke-dasharray:4 4;stroke-width:1.2}
+.asse{font:500 17px var(--testo);fill:var(--tenue)}
 footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--griglia);font-size:.82rem;color:var(--tenue)}
 footer a{color:var(--inchiostro)}
 @media (max-width:420px){
@@ -194,7 +200,7 @@ function apriDettaglio(det){
 
 function vistaValore(){
   const a = D.affidabilita, s1 = (a.sim_1x2||[]).find(r => r.soglia_valore === ">5%"), so = (a.sim_ou||[]).find(r => r.soglia_valore === ">5%");
-  let html = `<h2>Dove il modello non è d'accordo con il bookmaker</h2>
+  let html = sezionePiano() + `<h2>Tutte le giocate con valore</h2>
     <p class="lead">Qui compaiono le giocate in cui la quota del bookmaker è più alta di quella che il modello considera giusta, di almeno il 5%.
     Il confronto è possibile solo su 1-X-2 e Under/Over 2.5, gli unici mercati di cui abbiamo le quote.</p>`;
   if (s1 || so) html += `<div class="giudizio"><strong>Prima di fidarti</strong>
@@ -215,6 +221,85 @@ function tabSim(rows){
   ${rows.map(r => `<tr><td>${esc(r.soglia_valore.replace(">", "> "))}</td><td>${r.giocate}</td><td>${r.vinte}</td>
     <td class="${r.profitto_unita > 0 ? "esito-ok" : r.profitto_unita < 0 ? "esito-ko" : ""}">${r.profitto_unita > 0 ? "+" : ""}${String(r.profitto_unita).replace(".", ",")}</td><td>${esc(r.ROI).replace(".", ",")}</td></tr>`).join("")}
   </tbody></table></div>`;
+}
+
+function grafico(storia, base){
+  if (!storia || storia.length < 2) return "";
+  const W = 640, H = 240, L = 70, R = 10, T = 10, B = 26;
+  const v = storia.map(p => p[1]), min = Math.min(base, ...v), max = Math.max(base, ...v);
+  const x = i => L + (W - L - R) * i / (storia.length - 1), y = val => T + (H - T - B) * (1 - (val - min) / (max - min || 1));
+  const pts = storia.map((p, i) => `${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ");
+  const tick = val => `<text class="asse" x="${L - 6}" y="${y(val) + 4}" text-anchor="end">${Math.round(val)} €</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Andamento del budget">
+    <line class="base" x1="${L}" x2="${W - R}" y1="${y(base)}" y2="${y(base)}"/>
+    ${tick(max)}${tick(base)}${min < base - (max - min) * 0.08 ? tick(min) : ""}
+    <polyline class="linea" points="${pts}"/>
+    <text class="asse" x="${L}" y="${H - 6}">${esc(storia[0][0])}</text>
+    <text class="asse" x="${W - R}" y="${H - 6}" text-anchor="end">${esc(storia[storia.length - 1][0])}</text></svg>`;
+}
+
+function euro(x){ return x == null ? "—" : x.toFixed(2).replace(".", ",") + " €"; }
+
+function sezioneStagioni(a){
+  const r = a.per_stagione || [];
+  if (!r.length) return "";
+  const n4 = x => x == null ? "—" : x.toFixed(3).replace(".", ",");
+  return `<h3>Stagione per stagione</h3>
+    <p class="lead">Un vantaggio vero deve ripetersi negli anni, non comparire in una sola stagione fortunata. Errore: più basso è meglio.
+    La resa è quella delle giocate con valore sopra il 5%, pagate alla quota di chiusura.</p>
+    <div class="scroll"><table><thead><tr><th>Stagione</th><th>Errore modello</th><th>Errore bookmaker</th><th>Errore chiusura</th><th>Giocate</th><th>Resa</th></tr></thead><tbody>
+    ${r.map(x => `<tr><td>${esc(x.stagione)}</td>
+      <td class="${x.errore_modello < x.errore_bookmaker ? "esito-ok" : "esito-ko"}">${n4(x.errore_modello)}</td>
+      <td>${n4(x.errore_bookmaker)}</td><td>${n4(x.errore_chiusura)}</td><td>${x.giocate_valore}</td>
+      <td class="${x.resa_valore > 0 ? "esito-ok" : x.resa_valore < 0 ? "esito-ko" : ""}">${x.resa_valore == null ? "—" : (x.resa_valore > 0 ? "+" : "") + (x.resa_valore * 100).toFixed(1).replace(".", ",") + "%"}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="avviso-val">In verde le stagioni in cui il modello è stato più preciso del bookmaker.</p>`;
+}
+
+function sezioneChiusura(a){
+  const c = a.chiusura || {};
+  if (!c.log_loss_modello) return "";
+  const batte = c.log_loss_modello < c.log_loss_chiusura;
+  const clv = c.clv_0;
+  return `<h3>Contro le quote di chiusura</h3>
+    <p class="lead">Le quote di chiusura sono quelle subito prima del fischio d'inizio: le più precise e le più difficili da battere.</p>
+    <div class="giudizio"><strong>${batte ? "Il modello batte anche le quote di chiusura." : "Contro le quote di chiusura il modello è dietro."}</strong>
+      Errore medio su ${c.partite} partite: modello ${c.log_loss_modello.toFixed(4)}, chiusura ${c.log_loss_chiusura.toFixed(4)}.
+      ${clv != null ? `<br>Le giocate con valore sono state prese, in media, a quote ${clv > 0 ? "più alte" : "più basse"} di quelle giuste di chiusura del ${Math.abs(Math.round(clv * 1000) / 10).toString().replace(".", ",")}%${clv > 0 ? ": è il segnale più affidabile che il vantaggio è reale." : ": il vantaggio visto sopra probabilmente non è reale."}` : ""}</div>
+    ${c.sim && c.sim.length ? `<p class="lead">Le stesse giocate, pagate alla quota di chiusura:</p>${tabSim(c.sim)}` : ""}`;
+}
+
+function sezioneKelly(a){
+  const k = (a.kelly || {}).quote_chiusura;
+  if (!k) return "";
+  const r = a.kelly.quote_anticipo;
+  return `<h3>Piano di budget sulle stagioni passate</h3>
+    <p class="lead">Budget iniziale di 100 €. Su ogni partita il modello sceglie al massimo una giocata 1-X-2 e punta una parte del budget proporzionale al vantaggio
+    (un quarto della puntata di Kelly, mai più del 5% del budget su una giocata e del 30% in un giorno). Le vincite sono pagate alla quota di chiusura.</p>
+    <figure class="grafico">${grafico(k.andamento, k.budget_iniziale)}
+      <figcaption>Andamento del budget, giornata dopo giornata. La linea tratteggiata è il budget di partenza.</figcaption></figure>
+    <div class="cifre">
+      <div><b>${euro(k.finale)}</b><span>budget finale</span></div>
+      <div><b>${euro(k.minimo)}</b><span>punto più basso</span></div>
+      <div><b>${Math.round(k.ribasso_massimo * 100)}%</b><span>calo massimo dal picco</span></div>
+      <div><b>${k.giocate}</b><span>giocate (${k.vinte} vinte)</span></div>
+    </div>
+    ${r ? `<p class="avviso-val">Con le quote prese in anticipo (senza aspettare la chiusura) il budget finale sarebbe stato ${euro(r.finale)}.</p>` : ""}`;
+}
+
+function sezionePiano(){
+  const p = D.piano;
+  if (!p) return "";
+  let h = `<h2>Piano della giornata</h2>`;
+  if (!p.attivo) return h + `<div class="giudizio"><strong>Nessuna giocata consigliata</strong>${esc(p.motivo)}</div>`;
+  if (!p.giocate.length) return h + `<div class="giudizio"><strong>Nessuna giocata consigliata</strong>In questa giornata il modello non trova quote abbastanza vantaggiose.</div>`;
+  const tot = p.giocate.reduce((t, g) => t + g.percentuale, 0);
+  return h + `<p class="lead">Una giocata al massimo per partita. La percentuale è la parte del tuo budget da puntare: più alto il vantaggio, più alta la quota di budget.</p>
+    <div class="scroll"><table><thead><tr><th>Partita</th><th>Esito</th><th>Quota</th><th>% budget</th><th>Su 100 €</th></tr></thead><tbody>
+    ${p.giocate.map(g => `<tr><td>${esc(g.partita)}</td><td>${esc(g.esito)}</td><td>${q(g.quota)}</td>
+      <td>${(g.percentuale * 100).toFixed(1).replace(".", ",")}%</td><td>${euro(g.percentuale * 100)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="avviso-val">Totale impegnato: ${(tot * 100).toFixed(1).replace(".", ",")}% del budget. Controlla che la quota del tuo bookmaker sia almeno quella indicata: se è più bassa, la giocata perde il suo vantaggio.</p>`;
 }
 
 function vistaFiducia(){
@@ -242,6 +327,9 @@ function vistaFiducia(){
     <p class="lead">Una unità su ogni giocata in cui la quota del bookmaker superava la quota giusta del modello.</p>
     <h3>1-X-2</h3>${tabSim(a.sim_1x2 || [])}
     <h3>Under/Over 2.5</h3>${tabSim(a.sim_ou || [])}
+    ${sezioneStagioni(a)}
+    ${sezioneChiusura(a)}
+    ${sezioneKelly(a)}
     <p class="avviso-val">Con poche giocate i risultati dipendono molto dalla fortuna. Il margine del bookmaker, circa il 5%, gioca sempre contro.</p>`;
 }
 
