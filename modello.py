@@ -391,15 +391,24 @@ ev = df[(df.stagione >= prima_train) & df.esito.notna()].dropna(subset=CON_VAL +
 def allena(train, cols):
     return make_pipeline(StandardScaler(), LogisticRegression(max_iter=2000)).fit(train[cols], train.esito)
 
-test_idx, P_comb = [], []
+# le quote del bookmaker entrano nel modello come informazione in più: il modello parte da lì e le corregge
+df["book_1v2"] = np.log(df.p_book_1 / df.p_book_2)
+df["book_X"] = np.log(df.p_book_X)
+BOOK = ["book_1v2", "book_X"]
+ev = df[(df.stagione >= prima_train) & df.esito.notna()].dropna(subset=CON_VAL + BOOK)
+
+test_idx, P_comb, P_senza = [], [], []
 for ts in TEST_STAGIONI:
     train, test = ev[ev.stagione < ts], ev[ev.stagione == ts]
-    P_comb.append(allena(train, CON_VAL).predict_proba(test[CON_VAL]))
+    P_comb.append(allena(train, CON_VAL + BOOK).predict_proba(test[CON_VAL + BOOK]))
+    P_senza.append(allena(train, CON_VAL).predict_proba(test[CON_VAL]))
     test_idx.append(test.index)
-test_idx = np.concatenate(test_idx); P_comb = np.vstack(P_comb)
+test_idx = np.concatenate(test_idx); P_comb = np.vstack(P_comb); P_senza = np.vstack(P_senza)
 tt = df.loc[test_idx]
 P_book = tt[["p_book_1", "p_book_2", "p_book_X"]].values
 LL_MOD, LL_BOOK = log_loss(tt.esito, P_comb, labels=CLASSI), log_loss(tt.esito, P_book, labels=CLASSI)
+LL_SENZA = log_loss(tt.esito, P_senza, labels=CLASSI)
+print(f"1-X-2 senza quote in ingresso: {LL_SENZA:.4f}")
 ACC_MOD = accuracy_score(tt.esito, np.array(CLASSI)[P_comb.argmax(1)])
 ACC_BOOK = accuracy_score(tt.esito, np.array(CLASSI)[P_book.argmax(1)])
 print(f"1-X-2 su {len(tt)} partite di test — log loss modello: {LL_MOD:.4f} | bookmaker: {LL_BOOK:.4f}")
@@ -445,7 +454,42 @@ MODO_OU = min([k for k in risultati_ou if k.startswith("Modello")], key=lambda k
 print(f"Under/Over 2.5 su {ok_ou.sum()} partite di test (più basso = meglio):")
 print(tab_ou.to_string())
 MODO_GOL = MODO_OU.split("(")[1].rstrip(")")
-print("Per le previsioni uso:", MODO_OU)
+print("Gol totali stimati con:", MODO_OU)
+
+# probabilità di Over 2.5 del modello per tutte le partite, poi combinata con quella del bookmaker
+def totale_vett(d, modo):
+    tg = (d.lam_c + d.lam_t).values
+    if not USA_XG or modo == "gol":
+        return tg
+    tx = (d.lamxg_c + d.lamxg_t).values
+    tx = np.where(np.isnan(tx), tg, tx)
+    return tx if modo == "xg" else (tg + tx) / 2
+
+ok_l = df.lam_c.notna().values
+T_all = totale_vett(df, MODO_GOL)
+k_all = T_all / (df.lam_c + df.lam_t).values
+df["p_over_mod"] = np.nan
+if ok_l.any():
+    Pm = matrice(df.lam_c.values[ok_l] * k_all[ok_l], df.lam_t.values[ok_l] * k_all[ok_l], RHO["gol"])
+    ii, jj = np.indices(Pm.shape[1:])
+    df.loc[ok_l, "p_over_mod"] = Pm[:, (ii + jj) > 2.5].sum(axis=1)
+logit = lambda p: np.log(np.clip(p, 1e-6, 1 - 1e-6) / (1 - np.clip(p, 1e-6, 1 - 1e-6)))
+df["ou_mod"], df["ou_book"] = logit(df.p_over_mod), logit(df.p_book_over)
+df["over"] = np.where(df.esito.notna(), (df.gol_c + df.gol_t > 2.5).astype(float), np.nan)
+OU_COLS = ["ou_mod", "ou_book"]
+ev_ou = df[(df.stagione >= prima_train) & df.esito.notna()].dropna(subset=OU_COLS)
+def allena_ou(train):
+    return LogisticRegression(max_iter=1000).fit(train[OU_COLS], train.over.astype(int))
+p_blend = pd.Series(np.nan, index=df.index)
+for ts in TEST_STAGIONI:
+    tr_, te_ = ev_ou[ev_ou.stagione < ts], ev_ou[ev_ou.stagione == ts]
+    if len(te_):
+        p_blend[te_.index] = allena_ou(tr_).predict_proba(te_[OU_COLS])[:, 1]
+risultati_ou["Modello + quote"] = p_blend.reindex(ou.index).values
+tab_ou.loc["Modello + quote", "log_loss"] = round(log_loss(ou.over[ok_ou], np.clip(risultati_ou["Modello + quote"][ok_ou], 1e-6, 1 - 1e-6)), 4)
+tab_ou.loc["Modello + quote", "prob_media_over"] = round(np.nanmean(risultati_ou["Modello + quote"][ok_ou]), 4)
+MODO_OU = "Modello + quote"
+print(tab_ou.to_string())
 
 def simula(prob, quote, vinte, soglie=(0.0, 0.05, 0.10, 0.20)):
     """Punta 1 unità ogni volta che probabilità × quota − 1 supera la soglia."""
@@ -475,8 +519,19 @@ print("\nROI negativo = in quelle stagioni si sarebbe perso. Con poche giocate i
 
 # ==== Previsioni per la prossima giornata
 fin = df[df.esito.notna() & (df.stagione >= prima_train)]
-mod_con = allena(fin.dropna(subset=CON_VAL), CON_VAL)
-mod_senza = allena(fin.dropna(subset=BASE), BASE)
+MODELLI_FIN = {}
+for usa_v in (True, False):
+    for usa_b in (True, False):
+        cols = (CON_VAL if usa_v else BASE) + (BOOK if usa_b else [])
+        MODELLI_FIN[(usa_v, usa_b)] = (cols, allena(fin.dropna(subset=cols), cols))
+mod_ou = allena_ou(ev_ou)
+
+def tabella_tarata_ou(obiettivo_over, p1, p2, rho):
+    """Come tabella_tarata, ma sceglie i gol totali in modo che la probabilità di Over 2.5 sia quella voluta."""
+    f = lambda T: p_over(tabella_tarata(T, p1, p2, rho)) - obiettivo_over
+    lo, hi = 0.8, 6.0
+    T = lo if f(lo) > 0 else hi if f(hi) < 0 else brentq(f, lo, hi, xtol=1e-3)
+    return tabella_tarata(T, p1, p2, rho)
 
 def mercati(P):
     i, j = np.indices(P.shape); tot, gd = i + j, i - j
@@ -508,14 +563,19 @@ def num(x, nd=4):
 partite, righe_csv, righe_storico = [], [], []
 for r in df[df.futura].itertuples():
     usa_val = not pd.isna(r.diff_valore)
-    cols = CON_VAL if usa_val else BASE
+    usa_book = not pd.isna(r.book_1v2)
+    cols, mdl = MODELLI_FIN[(usa_val, usa_book)]
     x = pd.DataFrame([{c: getattr(r, c) for c in cols}])
     if pd.isna(r.lam_c) or x.isna().values.any():
         print(f"{r.casa}-{r.trasf}: dati insufficienti, salto")
         NOTE.append(f"{r.casa} - {r.trasf}: dati insufficienti per la previsione.")
         continue
-    pc = (mod_con if usa_val else mod_senza).predict_proba(x)[0]      # ordine 1, 2, X
-    P = tabella_tarata(gol_totali(r, MODO_GOL), pc[0], pc[1], RHO["gol"])
+    pc = mdl.predict_proba(x)[0]      # ordine 1, 2, X
+    if pd.notna(r.ou_mod) and pd.notna(r.ou_book):
+        obiettivo = mod_ou.predict_proba(pd.DataFrame([{"ou_mod": r.ou_mod, "ou_book": r.ou_book}]))[0, 1]
+        P = tabella_tarata_ou(obiettivo, pc[0], pc[1], RHO["gol"])
+    else:
+        P = tabella_tarata(gol_totali(r, MODO_GOL), pc[0], pc[1], RHO["gol"])
     ms = mercati(P)
     book = {("1X2", "1"): r.q1, ("1X2", "X"): r.qX, ("1X2", "2"): r.q2,
             ("Under/Over", "Over 2.5"): r.q_over, ("Under/Over", "Under 2.5"): r.q_under}
@@ -622,6 +682,7 @@ dati = {
         "stagioni_test": [f"20{s_[:2]}/{s_[2:]}" for s_ in TEST_STAGIONI],
         "partite_test": int(len(tt)),
         "x12": {"log_loss_modello": round(LL_MOD, 4), "log_loss_bookmaker": round(LL_BOOK, 4),
+                "log_loss_senza_quote": round(LL_SENZA, 4),
                 "esito_azzeccato_modello": round(ACC_MOD, 3), "esito_azzeccato_bookmaker": round(ACC_BOOK, 3)},
         "ou25": [{"modello": k, "log_loss": float(v.log_loss)} for k, v in tab_ou.dropna(subset=["log_loss"]).iterrows()],
         "ou_scelto": MODO_OU,

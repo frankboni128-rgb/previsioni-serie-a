@@ -230,7 +230,8 @@ function vistaFiducia(){
     <p class="lead">Ogni aggiornamento rifà la prova sulle stagioni ${a.stagioni_test.join(", ")} (${a.partite_test} partite):
     il modello prevede ogni partita usando solo i dati disponibili prima, e si confronta il risultato con le quote dei bookmaker.</p>
     <h3>1-X-2</h3>
-    <div class="giudizio"><strong>${giud}</strong>Errore medio (più basso è meglio): modello ${x.log_loss_modello.toFixed(4)}, bookmaker ${x.log_loss_bookmaker.toFixed(4)}.</div>
+    <div class="giudizio"><strong>${giud}</strong>Errore medio (più basso è meglio): modello ${x.log_loss_modello.toFixed(4)}, bookmaker ${x.log_loss_bookmaker.toFixed(4)}.
+      ${x.log_loss_senza_quote != null ? `<br>Il modello parte dalle quote del bookmaker e le corregge; senza le quote in ingresso farebbe ${x.log_loss_senza_quote.toFixed(4)}.` : ""}</div>
     <div class="cifre"><div><b>${pct(x.esito_azzeccato_modello)}</b><span>esiti azzeccati dal modello</span></div>
       <div><b>${pct(x.esito_azzeccato_bookmaker)}</b><span>esiti azzeccati dal bookmaker</span></div></div>
     <h3>Under/Over 2.5</h3>
