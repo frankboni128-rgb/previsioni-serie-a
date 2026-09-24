@@ -1,0 +1,113 @@
+{
+ "aggiornato": "2026-09-24 13:22",
+ "stagione": "2026/27",
+ "note": [
+  "Valori di mercato attuali (Transfermarkt) non disponibili: previsioni senza valori delle rose.",
+  "Nessuna partita in programma nei prossimi giorni (pausa o calendario non ancora pubblicato)."
+ ],
+ "partite": [],
+ "valore": [],
+ "affidabilita": {
+  "stagioni_test": [
+   "2023/24",
+   "2024/25",
+   "2025/26"
+  ],
+  "partite_test": 1134,
+  "x12": {
+   "log_loss_modello": 0.9741,
+   "log_loss_bookmaker": 0.968,
+   "esito_azzeccato_modello": 0.527,
+   "esito_azzeccato_bookmaker": 0.54
+  },
+  "ou25": [
+   {
+    "modello": "Modello tarato (gol)",
+    "log_loss": 0.6959
+   },
+   {
+    "modello": "Modello tarato (xg)",
+    "log_loss": 0.6931
+   },
+   {
+    "modello": "Modello tarato (misto)",
+    "log_loss": 0.6912
+   },
+   {
+    "modello": "Poisson puro (gol)",
+    "log_loss": 0.6959
+   },
+   {
+    "modello": "Bookmaker",
+    "log_loss": 0.6865
+   }
+  ],
+  "ou_scelto": "Modello tarato (misto)",
+  "sim_1x2": [
+   {
+    "soglia_valore": ">0%",
+    "giocate": 1301,
+    "vinte": 421,
+    "profitto_unita": -22.3,
+    "ROI": "-1.7%"
+   },
+   {
+    "soglia_valore": ">5%",
+    "giocate": 917,
+    "vinte": 269,
+    "profitto_unita": -74.2,
+    "ROI": "-8.1%"
+   },
+   {
+    "soglia_valore": ">10%",
+    "giocate": 600,
+    "vinte": 160,
+    "profitto_unita": -47.6,
+    "ROI": "-7.9%"
+   },
+   {
+    "soglia_valore": ">20%",
+    "giocate": 233,
+    "vinte": 55,
+    "profitto_unita": -20.0,
+    "ROI": "-8.6%"
+   }
+  ],
+  "sim_ou": [
+   {
+    "soglia_valore": ">0%",
+    "giocate": 738,
+    "vinte": 372,
+    "profitto_unita": -5.4,
+    "ROI": "-0.7%"
+   },
+   {
+    "soglia_valore": ">5%",
+    "giocate": 369,
+    "vinte": 173,
+    "profitto_unita": -16.4,
+    "ROI": "-4.4%"
+   },
+   {
+    "soglia_valore": ">10%",
+    "giocate": 165,
+    "vinte": 67,
+    "profitto_unita": -20.3,
+    "ROI": "-12.3%"
+   },
+   {
+    "soglia_valore": ">20%",
+    "giocate": 21,
+    "vinte": 7,
+    "profitto_unita": -4.1,
+    "ROI": "-19.8%"
+   }
+  ]
+ },
+ "storico": {
+  "riepilogo": {
+   "partite": 0
+  },
+  "ultime": []
+ }
+}
