@@ -261,19 +261,21 @@ function sezioneEsperimenti(a){
       <td class="${x.resa_serie_a > 0 ? "esito-ok" : x.resa_serie_a < 0 ? "esito-ko" : ""}">${pc1(x.resa_serie_a)}</td>
       <td>${x.kelly_serie_a == null ? "—" : euro(x.kelly_serie_a)}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="avviso-val">Evidenziata la versione usata per le previsioni. Le formazioni ufficiali arrivano solo un'ora prima della partita, quindi quella versione serve a capire se valgono la pena, non per le previsioni quotidiane.${copMedia != null ? ` Formazioni disponibili per il ${copMedia}% delle partite di test.` : ""}</p>`;
+    <p class="avviso-val">Evidenziata la versione usata per le previsioni. Le formazioni ufficiali arrivano solo un'ora prima della partita, quindi quella versione serve a capire se valgono la pena, non per le previsioni quotidiane.${copMedia != null ? ` Formazioni disponibili per il ${copMedia}% delle partite di test.` : ""}
+    ${a.errore_formazioni ? ` Formazioni non collegate: ${esc(a.errore_formazioni)}` : ""}</p>`;
 }
 
 function sezionePinnacle(a){
   const p = a.pinnacle;
   if (!p) return "";
-  const tab = (rows, titolo) => rows && rows.length ? `<p class="lead"><b>${titolo}</b></p><div class="scroll"><table><thead><tr><th>Scarto minimo</th><th>Giocate</th><th>Resa</th><th>Vantaggio sulla chiusura</th></tr></thead><tbody>
+  const tab = (rows, titolo) => rows && rows.length ? `<p class="lead"><b>${titolo}</b></p><div class="scroll"><table><thead><tr><th>Scarto minimo</th><th>Giocate</th><th>Resa</th><th>Vantaggio sulla chiusura</th><th>Resa alla chiusura</th></tr></thead><tbody>
     ${rows.map(r => `<tr><td>${esc(r.soglia.replace(">", "> "))}</td><td>${r.giocate}</td>
       <td class="${r.resa > 0 ? "esito-ok" : r.resa < 0 ? "esito-ko" : ""}">${pc1(r.resa)}</td>
-      <td class="${r.clv > 0 ? "esito-ok" : r.clv < 0 ? "esito-ko" : ""}">${pc1(r.clv)}</td></tr>`).join("")}</tbody></table></div>` : "";
+      <td class="${r.clv > 0 ? "esito-ok" : r.clv < 0 ? "esito-ko" : ""}">${pc1(r.clv)}</td>
+      <td>${pc1(r.resa_chiusura)}</td></tr>`).join("")}</tbody></table></div>` : "";
   return `<h3>Pinnacle contro gli altri bookmaker</h3>
     <p class="lead">Nessun modello: si gioca quando la quota di un bookmaker è più alta di quella giusta secondo Pinnacle, il bookmaker più preciso.
-    Stagioni ${a.stagioni_test.join(", ")}, vincite pagate alla quota di chiusura dello stesso bookmaker.</p>
+    Stagioni ${a.stagioni_test.join(", ")}. La resa è calcolata alla quota presa al momento della giocata; l'ultima colonna mostra quanto sarebbe rimasto se la quota fosse già scesa al valore di chiusura.</p>
     ${tab(p.bet365_serie_a, "Serie A, quote Bet365")}
     ${tab(p.migliore_serie_a, "Serie A, migliore quota del mercato")}
     ${tab(p.bet365_cinque, "5 campionati, quote Bet365")}

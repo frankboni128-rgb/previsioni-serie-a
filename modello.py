@@ -151,6 +151,12 @@ df["book_1v2"], df["book_X"] = np.log(df.p_book_1 / df.p_book_2), np.log(df.p_bo
 df["pin_1v2"], df["pin_X"] = np.log(df.p_pin_1 / df.p_pin_2), np.log(df.p_pin_X)
 # quanto Pinnacle e gli altri bookmaker non sono d'accordo
 df["dis_1v2"] = df.pin_1v2 - df.book_1v2
+# dove le quote Pinnacle mancano (es. parte del 2025/26) si usano quelle disponibili: nessuna partita viene scartata
+df["pin_1v2"] = df.pin_1v2.fillna(df.book_1v2)
+df["pin_X"] = df.pin_X.fillna(df.book_X)
+df["dis_1v2"] = df.dis_1v2.fillna(0.0)
+print("Partite di Serie A senza quote Pinnacle, per stagione:")
+print(df[df.lega == PRINCIPALE].groupby("stagione").qp1.apply(lambda x: round(x.isna().mean(), 2)).tail(8).to_string())
 tempo(f"Totale partite: {len(df)}")
 
 # ==== Elo (separato per campionato)
@@ -298,6 +304,7 @@ rose = (griglia.groupby(["to_club_id", "data"])
         .agg(valore=("market_value_in_eur", "sum"), n=("player_id", "size")).reset_index())
 top11 = griglia[griglia.pos < 11].groupby(["to_club_id", "data"]).market_value_in_eur.sum().rename("top11").reset_index()
 rose = rose.merge(top11, on=["to_club_id", "data"])
+top11["to_club_id"] = top11["to_club_id"].astype("int64")
 rose = rose[rose.n >= 15]
 rose["chiave"] = rose.to_club_id.map(id_chiave).astype(object)
 del griglia
@@ -313,21 +320,29 @@ vecchio = ((df.data - df.c_foto).dt.days > 60) | ((df.data - df.t_foto).dt.days 
 df["diff_valore"] = np.where(vecchio, np.nan, np.log(df.c_valore) - np.log(df.t_valore))
 
 # Formazioni ufficiali: valore degli 11 titolari rispetto agli 11 migliori della rosa
-USA_XI = False
+USA_XI, XI_ERRORE = False, None
 df["diff_xi"] = np.nan
 try:
     lu = tm("game_lineups", ["game_id", "player_id", "club_id", "type"])
-    lu = lu[lu.game_id.isin(gi.game_id) & lu.type.astype(str).str.contains("start", case=False)]
-    lu = lu.merge(gi[["game_id", "date"]], on="game_id").rename(columns={"date": "data"}).sort_values("data")
-    lu = pd.merge_asof(lu, v_ord[v_ord.player_id.isin(lu.player_id.unique())],
-                       left_on="data", right_on="data_val", by="player_id")
+    print("Tipi di riga nelle formazioni:", lu.type.astype(str).value_counts().head(5).to_dict())
+    lu = lu.dropna(subset=["game_id", "player_id", "club_id"])
+    lu[["game_id", "player_id", "club_id"]] = lu[["game_id", "player_id", "club_id"]].astype("int64")
+    lu = lu[lu.game_id.isin(gi.game_id.astype("int64")) & lu.type.astype(str).str.contains("start", case=False)]
+    print("Righe titolari nei 5 campionati:", len(lu))
+    gid = gi[["game_id", "date"]].assign(game_id=gi.game_id.astype("int64"))
+    lu = lu.merge(gid, on="game_id").rename(columns={"date": "data"}).dropna(subset=["data"]).sort_values("data")
+    vv = v_ord[v_ord.player_id.isin(lu.player_id.unique())].assign(player_id=lambda x: x.player_id.astype("int64"))
+    lu = pd.merge_asof(lu, vv, left_on="data", right_on="data_val", by="player_id")
     lu = lu[(lu.data - lu.data_val).dt.days <= 400]
     xi = lu.groupby(["game_id", "club_id", "data"]).agg(xi=("market_value_in_eur", "sum"), n=("player_id", "size")).reset_index()
     xi = xi[xi.n >= 10].sort_values("data")
+    print("Formazioni con almeno 10 titolari valutati:", len(xi))
     t11 = top11.rename(columns={"to_club_id": "club_id", "data": "data_foto"}).sort_values("data_foto")
+    xi["club_id"] = xi["club_id"].astype("int64")
     xi = pd.merge_asof(xi, t11, left_on="data", right_on="data_foto", by="club_id", allow_exact_matches=False)
     xi["rapporto"] = (xi.xi / xi.top11).clip(0.2, 1.5)
-    gx = gi[["game_id", "date", "home_club_id", "away_club_id"]].copy()
+    gx = gi[["game_id", "date", "home_club_id", "away_club_id"]].dropna().copy()
+    gx[["game_id", "home_club_id", "away_club_id"]] = gx[["game_id", "home_club_id", "away_club_id"]].astype("int64")
     gx["kc"], gx["kt"] = gx.home_club_id.map(id_chiave), gx.away_club_id.map(id_chiave)
     gx = gx.merge(xi[["game_id", "club_id", "rapporto"]].rename(columns={"club_id": "home_club_id", "rapporto": "r_c"}),
                   on=["game_id", "home_club_id"], how="left")
@@ -342,7 +357,10 @@ try:
     del lu, xi
     tempo(f"Formazioni: {df.diff_xi.notna().sum()} partite con valore degli 11 titolari")
 except Exception as e:
-    print("Formazioni non disponibili:", e)
+    XI_ERRORE = f"{type(e).__name__}: {e}"[:300]
+    print("Formazioni non disponibili:", XI_ERRORE)
+if not USA_XI and XI_ERRORE is None:
+    XI_ERRORE = f"solo {int(df.diff_xi.notna().sum())} partite con formazione collegata"
 COPERTURA_XI = {s_: round(float(df.loc[(df.stagione == s_) & (df.lega == PRINCIPALE), "diff_xi"].notna().mean()), 2)
                 for s_ in TEST_STAGIONI}
 
@@ -555,9 +573,11 @@ def strategia_pinnacle(d, col_q, col_paga):
     q = qarr(d, col_q)
     righe = []
     for soglia in (0.0, 0.02, 0.05):
-        r_, n_ = resa(pf, q, qarr(d, col_paga), vinte_di(d), soglia)
+        r_, n_ = resa(pf, q, q, vinte_di(d), soglia)                      # pagata alla quota presa
+        rc_, _ = resa(pf, q, qarr(d, col_paga), vinte_di(d), soglia)       # se la quota scendesse fino alla chiusura
         c_, _ = clv(np.where(pf * q - 1 > soglia, pf, 0), q, qarr(d, QS))
         righe.append({"soglia": f">{soglia:.0%}", "giocate": n_, "resa": None if r_ is None else round(r_, 4),
+                      "resa_chiusura": None if rc_ is None else round(rc_, 4),
                       "clv": None if c_ is None else round(c_, 4)})
     return righe
 base_pin = pool[pool.stagione.isin(TEST_STAGIONI)].dropna(subset=["qp1", "qp2", "qpX"])
@@ -872,6 +892,7 @@ dati = {
         "versione": SCELTA,
         "esperimenti": ESPERIMENTI,
         "copertura_formazioni": COPERTURA_XI,
+        "errore_formazioni": XI_ERRORE,
         "pinnacle": PINNACLE,
         "x12": {"log_loss_modello": round(LL_MOD, 4), "log_loss_bookmaker": round(LL_BOOK, 4),
                 "log_loss_senza_quote": None,
