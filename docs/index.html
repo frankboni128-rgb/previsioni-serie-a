@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Previsioni Serie A</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --carta:#EEF2EA; --carta2:#E3EADF; --inchiostro:#1B3A2E; --tenue:#5E7467;
+  --griglia:#BFD0BE; --segno:#C8372D; --segno-tenue:#F4D9D4; --ok:#2F7A4F;
+  --cond:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --testo:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --carta:#13201A; --carta2:#1A2A22; --inchiostro:#E3ECE4; --tenue:#93A89A;
+    --griglia:#2E4238; --segno:#F0674F; --segno-tenue:#3A221E; --ok:#6CC08F;
+  }
+}
+:root[data-theme="dark"]{
+  --carta:#13201A; --carta2:#1A2A22; --inchiostro:#E3ECE4; --tenue:#93A89A;
+  --griglia:#2E4238; --segno:#F0674F; --segno-tenue:#3A221E; --ok:#6CC08F;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--carta);color:var(--inchiostro);font:400 16px/1.5 var(--testo);
+  -webkit-font-smoothing:antialiased}
+.pagina{max-width:720px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+  border-bottom:3px solid var(--inchiostro);padding-bottom:10px}
+h1{font:700 2.4rem/0.95 var(--cond);margin:0;letter-spacing:-0.01em}
+.agg{font-size:.8rem;color:var(--tenue);text-align:right;line-height:1.3}
+nav{display:flex;gap:4px;margin:14px 0 18px;overflow-x:auto}
+nav button{font:600 1.05rem var(--cond);color:var(--tenue);background:none;border:0;
+  padding:8px 7px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{color:var(--inchiostro);border-bottom-color:var(--segno)}
+button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--segno);outline-offset:2px}
+.note{border-left:4px solid var(--segno);background:var(--segno-tenue);padding:10px 12px;margin-bottom:16px;font-size:.92rem}
+.note p{margin:0}.note p+p{margin-top:4px}
+.vuoto{padding:32px 0;color:var(--tenue)}
+.vuoto strong{display:block;font:600 1.4rem var(--cond);color:var(--inchiostro);margin-bottom:4px}
+
+/* schedina */
+.schedina{border:2px solid var(--inchiostro)}
+.intestazione{display:grid;grid-template-columns:1fr repeat(3,56px);font:600 .95rem var(--cond);
+  color:var(--tenue);border-bottom:2px solid var(--inchiostro);background:var(--carta2)}
+.intestazione span{padding:6px 10px}.intestazione span:not(:first-child){text-align:center;border-left:1px solid var(--griglia)}
+.giorno{font:600 .9rem var(--cond);color:var(--tenue);padding:6px 10px;background:var(--carta2);
+  border-bottom:1px solid var(--griglia)}
+details.partita{border-bottom:1px solid var(--griglia)}
+details.partita:last-child{border-bottom:0}
+summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:1fr repeat(3,56px);align-items:stretch}
+summary::-webkit-details-marker{display:none}
+.chi{padding:10px}
+.squadre{font:600 1.3rem/1.1 var(--cond)}
+.extra{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.82rem;color:var(--tenue);margin-top:4px}
+.extra b{color:var(--inchiostro);font-weight:600}
+.casella{position:relative;display:flex;align-items:center;justify-content:center;border-left:1px solid var(--griglia);
+  font:600 1.15rem var(--cond);font-variant-numeric:tabular-nums}
+.casella svg{position:absolute;left:3px;top:50%;width:calc(100% - 6px);height:34px;transform:translateY(-50%);overflow:visible;pointer-events:none}
+.casella svg ellipse{fill:none;stroke:var(--segno);stroke-width:2.2;stroke-linecap:round}
+.casella.scelta{color:var(--segno)}
+.dettaglio{padding:4px 10px 14px;background:var(--carta2);border-top:1px dashed var(--griglia)}
+.filtri{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.filtri button{font:500 .85rem var(--testo);color:var(--inchiostro);background:var(--carta);border:1px solid var(--griglia);
+  padding:5px 10px;cursor:pointer}
+.filtri button[aria-pressed="true"]{background:var(--inchiostro);color:var(--carta);border-color:var(--inchiostro)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.92rem;font-variant-numeric:tabular-nums}
+th{font:600 .85rem var(--cond);color:var(--tenue);text-align:right;padding:6px 8px;border-bottom:2px solid var(--inchiostro)}
+th:first-child,td:first-child{text-align:left}
+td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--griglia)}
+tr.valore td{background:var(--segno-tenue)}
+.barra{display:inline-block;height:6px;background:var(--inchiostro);opacity:.25;vertical-align:middle;margin-right:6px}
+.pos{color:var(--segno);font-weight:600}
+.avviso-val{font-size:.8rem;color:var(--tenue);margin-top:8px}
+
+/* sezioni testuali */
+h2{font:700 1.6rem/1.1 var(--cond);margin:28px 0 8px}
+h2:first-child{margin-top:4px}
+h3{font:600 1.15rem var(--cond);margin:20px 0 6px}
+p.lead{margin:0 0 12px;max-width:62ch}
+.giudizio{border:2px solid var(--inchiostro);padding:12px 14px;margin:12px 0}
+.giudizio strong{font:700 1.2rem var(--cond);display:block}
+.cifre{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));border:2px solid var(--inchiostro);margin:12px 0}
+.cifre div{padding:10px 12px;border-right:1px solid var(--griglia);border-bottom:1px solid var(--griglia)}
+.cifre b{display:block;font:700 1.7rem/1 var(--cond);font-variant-numeric:tabular-nums}
+.cifre span{font-size:.82rem;color:var(--tenue)}
+.esito-ok{color:var(--ok);font-weight:600}.esito-ko{color:var(--segno);font-weight:600}
+footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--griglia);font-size:.82rem;color:var(--tenue)}
+footer a{color:var(--inchiostro)}
+@media (max-width:420px){
+  summary,.intestazione{grid-template-columns:1fr repeat(3,46px)}
+  .squadre{font-size:1.15rem}
+}
+@media (prefers-reduced-motion:no-preference){
+  .casella.scelta svg ellipse{stroke-dasharray:140;stroke-dashoffset:140;animation:cerchio .5s ease-out .15s forwards}
+  @keyframes cerchio{to{stroke-dashoffset:0}}
+}
+</style>
+</head>
+<body>
+<div class="pagina">
+  <header>
+    <h1>Previsioni<br>Serie A</h1>
+    <div class="agg" id="agg">Caricamento…</div>
+  </header>
+  <nav role="tablist">
+    <button role="tab" aria-selected="true" data-vista="giornata">Giornata</button>
+    <button role="tab" aria-selected="false" data-vista="valore">Valore</button>
+    <button role="tab" aria-selected="false" data-vista="fiducia">Affidabilità</button>
+    <button role="tab" aria-selected="false" data-vista="storico">Storico</button>
+  </nav>
+  <div id="note"></div>
+  <main id="vista"></main>
+  <footer>
+    La pagina si aggiorna da sola più volte a settimana.
+    <a href="previsioni_giornata.csv" download>Scarica le previsioni in CSV</a>
+  </footer>
+</div>
+<script>
+const MERCATI = ["1X2","Doppia chance","Under/Over","Goal/No Goal","Multigol","Somma gol",
+  "Handicap casa -2","Handicap casa -1","Handicap casa +1","Handicap casa +2","Risultato esatto"];
+const GIORNI = ["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"];
+const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+let D = null, vistaCorrente = "giornata";
+
+const pct = p => p == null ? "—" : Math.round(p * 100) + "%";
+const n1 = x => (x > 0 ? "+" : "") + String(x).replace(".", ",");
+const q = x => x == null ? "—" : x.toFixed(2).replace(".", ",");
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function dataLunga(s){ const d = new Date(s + "T12:00:00"); return `${GIORNI[d.getDay()]} ${d.getDate()} ${MESI[d.getMonth()]}`; }
+function trova(p, merc, es){ return (p.mercati[merc] || []).find(v => v.esito === es) || {}; }
+
+function cerchio(){ return `<svg viewBox="0 0 48 40" preserveAspectRatio="none" aria-hidden="true">
+  <ellipse cx="24" cy="20" rx="21" ry="16" transform="rotate(-8 24 20)"/></svg>`; }
+
+function vistaGiornata(){
+  if (!D.partite.length) return `<div class="vuoto"><strong>Nessuna partita in programma</strong>
+    Appena football-data pubblica il calendario della prossima giornata, le previsioni compaiono qui.</div>`;
+  let html = `<div class="schedina"><div class="intestazione"><span>Partita</span><span>1</span><span>X</span><span>2</span></div>`;
+  let giornoPrec = "";
+  D.partite.forEach((p, i) => {
+    if (p.data !== giornoPrec){ html += `<div class="giorno">${dataLunga(p.data)}</div>`; giornoPrec = p.data; }
+    const pr = {"1": trova(p,"1X2","1").p, "X": trova(p,"1X2","X").p, "2": trova(p,"1X2","2").p};
+    const max = Object.keys(pr).reduce((a,b) => pr[a] >= pr[b] ? a : b);
+    const ris = (p.mercati["Risultato esatto"] || []).slice(0,2).map(v => v.esito).join(" o ");
+    html += `<details class="partita" data-i="${i}"><summary>
+      <div class="chi"><div class="squadre">${esc(p.casa)} – ${esc(p.trasf)}</div>
+        <div class="extra">${p.ora ? `<span>ore ${esc(p.ora)}</span>` : ""}
+          <span>Over 2.5 <b>${pct(trova(p,"Under/Over","Over 2.5").p)}</b></span>
+          <span>Goal <b>${pct(trova(p,"Goal/No Goal","Goal").p)}</b></span>
+          <span>Gol attesi <b>${String(p.gol_attesi).replace(".", ",")}</b></span>
+          <span>Più probabili <b>${esc(ris)}</b></span></div></div>
+      ${["1","X","2"].map(k => `<div class="casella${k===max?" scelta":""}">${k===max?cerchio():""}${pct(pr[k])}</div>`).join("")}
+    </summary><div class="dettaglio"></div></details>`;
+  });
+  html += `</div><p class="avviso-val">Tocca una partita per vedere tutti i mercati. Il cerchio indica l'esito più probabile, non per forza la giocata migliore.</p>`;
+  return html;
+}
+
+function tabellaMercato(p, merc){
+  const righe = p.mercati[merc] || [];
+  const conBook = righe.some(v => v.quota_book != null);
+  return `<div class="scroll"><table><thead><tr><th>Esito</th><th>Probabilità</th><th>Quota giusta</th>
+    ${conBook ? "<th>Quota bookmaker</th><th>Valore</th>" : ""}</tr></thead><tbody>
+    ${righe.map(v => `<tr class="${v.valore > 0.05 ? "valore" : ""}"><td>${esc(v.esito)}</td>
+      <td><span class="barra" style="width:${Math.round(v.p*48)}px"></span>${pct(v.p)}</td>
+      <td>${q(v.quota_giusta)}</td>
+      ${conBook ? `<td>${q(v.quota_book)}</td><td class="${v.valore > 0 ? "pos" : ""}">${v.valore == null ? "—" : (v.valore > 0 ? "+" : "") + Math.round(v.valore*100) + "%"}</td>` : ""}
+    </tr>`).join("")}</tbody></table></div>`;
+}
+
+function apriDettaglio(det){
+  const p = D.partite[+det.dataset.i], box = det.querySelector(".dettaglio");
+  if (box.dataset.pronto) return;
+  box.dataset.pronto = 1;
+  const disponibili = MERCATI.filter(m => p.mercati[m]);
+  const disegna = merc => {
+    box.innerHTML = `<div class="filtri">${disponibili.map(m =>
+      `<button type="button" aria-pressed="${m===merc}" data-m="${esc(m)}">${esc(m)}</button>`).join("")}</div>
+      ${tabellaMercato(p, merc)}
+      ${p.valori_usati ? "" : `<p class="avviso-val">Previsione senza valori di mercato delle rose: un po' meno precisa.</p>`}`;
+    box.querySelectorAll(".filtri button").forEach(b => b.onclick = () => disegna(b.dataset.m));
+  };
+  disegna("1X2");
+}
+
+function vistaValore(){
+  const a = D.affidabilita, s1 = (a.sim_1x2||[]).find(r => r.soglia_valore === ">5%"), so = (a.sim_ou||[]).find(r => r.soglia_valore === ">5%");
+  let html = `<h2>Dove il modello non è d'accordo con il bookmaker</h2>
+    <p class="lead">Qui compaiono le giocate in cui la quota del bookmaker è più alta di quella che il modello considera giusta, di almeno il 5%.
+    Il confronto è possibile solo su 1-X-2 e Under/Over 2.5, gli unici mercati di cui abbiamo le quote.</p>`;
+  if (s1 || so) html += `<div class="giudizio"><strong>Prima di fidarti</strong>
+    Nelle stagioni ${a.stagioni_test.join(", ")}, puntando su tutte le giocate come queste:
+    1-X-2 ${s1 ? `${s1.giocate} giocate, risultato ${n1(s1.profitto_unita)} unità (${esc(s1.ROI).replace(".", ",")})` : "—"};
+    Under/Over 2.5 ${so ? `${so.giocate} giocate, risultato ${n1(so.profitto_unita)} unità (${esc(so.ROI).replace(".", ",")})` : "—"}.
+    Quando il modello e il bookmaker non sono d'accordo, spesso sbaglia il modello.</div>`;
+  if (!D.valore.length) return html + `<div class="vuoto"><strong>Nessuna giocata con valore</strong>Per la prossima giornata il modello e il bookmaker sono allineati.</div>`;
+  html += `<div class="scroll"><table><thead><tr><th>Partita</th><th>Giocata</th><th>Prob.</th><th>Quota</th><th>Valore</th></tr></thead><tbody>
+    ${D.valore.map(v => `<tr><td>${esc(v.partita)}</td><td>${esc(v.mercato === "1X2" ? "Esito " + v.esito : v.esito)}</td><td>${pct(v.p)}</td>
+      <td>${q(v.quota_book)}</td><td class="pos">+${Math.round(v.valore*100)}%</td></tr>`).join("")}
+    </tbody></table></div>`;
+  return html;
+}
+
+function tabSim(rows){
+  return `<div class="scroll"><table><thead><tr><th>Valore</th><th>Giocate</th><th>Vinte</th><th>Unità</th><th>Resa</th></tr></thead><tbody>
+  ${rows.map(r => `<tr><td>${esc(r.soglia_valore.replace(">", "> "))}</td><td>${r.giocate}</td><td>${r.vinte}</td>
+    <td class="${r.profitto_unita > 0 ? "esito-ok" : r.profitto_unita < 0 ? "esito-ko" : ""}">${r.profitto_unita > 0 ? "+" : ""}${String(r.profitto_unita).replace(".", ",")}</td><td>${esc(r.ROI).replace(".", ",")}</td></tr>`).join("")}
+  </tbody></table></div>`;
+}
+
+function vistaFiducia(){
+  const a = D.affidabilita, x = a.x12;
+  const diff = x.log_loss_modello - x.log_loss_bookmaker;
+  const giud = diff <= 0 ? "Il modello è preciso quanto il bookmaker, o di più."
+    : diff < 0.01 ? "Il modello è vicinissimo al bookmaker, ma ancora un filo dietro."
+    : "Il modello è meno preciso del bookmaker.";
+  const ou = a.ou25 || [], book = ou.find(r => r.modello === "Bookmaker"), mod = ou.find(r => r.modello === a.ou_scelto);
+  const giudOu = !book || !mod ? "Dati non disponibili." : mod.log_loss <= book.log_loss
+    ? "Sull'Under/Over 2.5 il modello è preciso quanto il bookmaker, o di più." : "Sull'Under/Over 2.5 il modello è meno preciso del bookmaker.";
+  return `<h2>Quanto fidarsi del modello</h2>
+    <p class="lead">Ogni aggiornamento rifà la prova sulle stagioni ${a.stagioni_test.join(", ")} (${a.partite_test} partite):
+    il modello prevede ogni partita usando solo i dati disponibili prima, e si confronta il risultato con le quote dei bookmaker.</p>
+    <h3>1-X-2</h3>
+    <div class="giudizio"><strong>${giud}</strong>Errore medio (più basso è meglio): modello ${x.log_loss_modello.toFixed(4)}, bookmaker ${x.log_loss_bookmaker.toFixed(4)}.</div>
+    <div class="cifre"><div><b>${pct(x.esito_azzeccato_modello)}</b><span>esiti azzeccati dal modello</span></div>
+      <div><b>${pct(x.esito_azzeccato_bookmaker)}</b><span>esiti azzeccati dal bookmaker</span></div></div>
+    <h3>Under/Over 2.5</h3>
+    <div class="giudizio"><strong>${giudOu}</strong>${mod && book ? `Errore medio: modello ${mod.log_loss.toFixed(4)}, bookmaker ${book.log_loss.toFixed(4)}.` : ""}</div>
+    <p class="lead">Gli altri mercati gol (Multigol, Somma gol, Goal/No Goal, Risultato esatto) vengono dallo stesso calcolo dell'Under/Over:
+    se l'Under/Over regge, reggono anche loro. Non ci sono quote storiche per verificarli uno per uno.</p>
+    <h3>Se avessi puntato sulle giocate con valore</h3>
+    <p class="lead">Una unità su ogni giocata in cui la quota del bookmaker superava la quota giusta del modello.</p>
+    <h3>1-X-2</h3>${tabSim(a.sim_1x2 || [])}
+    <h3>Under/Over 2.5</h3>${tabSim(a.sim_ou || [])}
+    <p class="avviso-val">Con poche giocate i risultati dipendono molto dalla fortuna. Il margine del bookmaker, circa il 5%, gioca sempre contro.</p>`;
+}
+
+function vistaStorico(){
+  const r = D.storico.riepilogo || {}, u = D.storico.ultime || [];
+  if (!r.partite) return `<h2>Storico</h2><div class="vuoto"><strong>Ancora nessuna partita valutata</strong>
+    Dopo la prima giornata giocata con il modello attivo, qui trovi come sono andate le previsioni.</div>`;
+  return `<h2>Come sono andate le previsioni</h2>
+    <p class="lead">Previsioni salvate prima di ogni partita e confrontate con il risultato vero.</p>
+    <div class="cifre">
+      <div><b>${r.partite}</b><span>partite valutate</span></div>
+      <div><b>${pct(r.esito_azzeccato)}</b><span>esito 1-X-2 più probabile azzeccato</span></div>
+      <div><b>${pct(r.over25_azzeccato)}</b><span>Under/Over 2.5 azzeccato</span></div>
+      ${r.giocate_valore ? `<div><b>${r.profitto_unita > 0 ? "+" : ""}${String(r.profitto_unita).replace(".", ",")}</b><span>unità sulle ${r.giocate_valore} giocate con valore (${r.giocate_vinte} vinte)</span></div>` : ""}
+    </div>
+    ${r.log_loss_bookmaker ? `<p class="lead">Errore medio 1-X-2: modello ${r.log_loss_modello_stesse.toFixed(4)}, bookmaker ${r.log_loss_bookmaker.toFixed(4)} (più basso è meglio).</p>` : ""}
+    <div class="scroll"><table><thead><tr><th>Partita</th><th>Ris.</th><th>Previsto</th><th>Giocata con valore</th></tr></thead><tbody>
+    ${u.map(m => `<tr><td>${esc(m.casa)} – ${esc(m.trasf)}</td><td>${esc(m.risultato)}</td>
+      <td class="${m.previsto === m.esito ? "esito-ok" : "esito-ko"}">${esc(m.previsto)}</td><td>${esc(m.pick) || "—"}</td></tr>`).join("")}
+    </tbody></table></div>`;
+}
+
+function mostra(v){
+  vistaCorrente = v;
+  document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.vista === v));
+  const main = document.getElementById("vista");
+  main.innerHTML = {giornata: vistaGiornata, valore: vistaValore, fiducia: vistaFiducia, storico: vistaStorico}[v]();
+  main.querySelectorAll("details.partita").forEach(d => d.addEventListener("toggle", () => d.open && apriDettaglio(d)));
+}
+
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => mostra(b.dataset.vista));
+fetch("dati.json?t=" + Date.now()).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
+  D = d;
+  const [dd, hh] = String(d.aggiornato).split(" "), [y, mo, gg] = dd.split("-");
+  document.getElementById("agg").innerHTML = `Stagione ${esc(d.stagione)}<br>aggiornato il ${+gg} ${MESI[+mo-1]} alle ${esc(hh || "")}`;
+  document.getElementById("note").innerHTML = d.note && d.note.length ? `<div class="note">${d.note.map(n => `<p>${esc(n)}</p>`).join("")}</div>` : "";
+  mostra("giornata");
+}).catch(() => {
+  document.getElementById("agg").textContent = "";
+  document.getElementById("vista").innerHTML = `<div class="vuoto"><strong>Dati non ancora disponibili</strong>
+    Il primo aggiornamento non è ancora terminato. Su GitHub, nella scheda Actions, controlla che l'esecuzione sia completata.</div>`;
+});
+</script>
+</body>
+</html>

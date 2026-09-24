@@ -1,0 +1,6 @@
+pandas>=2.2
+numpy
+scipy
+scikit-learn
+requests
+beautifulsoup4
