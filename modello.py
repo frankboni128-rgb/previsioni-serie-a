@@ -744,6 +744,87 @@ SIM_OU = simula(np.column_stack([po, 1 - po]).ravel(), qarr(ou, ["q_over", "q_un
                 np.column_stack([ou.over == 1, ou.over == 0]).ravel())
 print(tab_ou.to_string())
 
+# ==== Giocata della giornata: una giocata scelta per ogni giornata, come farebbe uno scommettitore
+def chiave_giornata(date):
+    """Giornata = weekend (ven-lun) o turno infrasettimanale (mar-gio)."""
+    sh = pd.to_datetime(pd.Series(date)).reset_index(drop=True) - pd.Timedelta(days=1)
+    iso = sh.dt.isocalendar()
+    parte = np.where(sh.dt.dayofweek <= 2, "M", "W")
+    return (iso.year.astype(str) + "-" + iso.week.astype(str).str.zfill(2) + pd.Series(parte)).values
+
+def candidati_storici(d, P, p_over):
+    righe = []
+    base = {"match": d.index.values, "data": d.data.values, "stagione": d.stagione.values,
+            "partita": (d.casa + " - " + d.trasf).values}
+    for k, es in enumerate(["1", "2", "X"]):
+        righe.append(pd.DataFrame({**base, "mercato": "1X2", "esito": es, "p": P[:, k],
+                                   "quota": d[Q1X2[k]].values, "chius": d[QC[k]].values,
+                                   "vinta": (d.esito == es).values}))
+    tot = (d.gol_c + d.gol_t).values
+    for es, pp, col, win in [("Over 2.5", p_over, "q_over", tot > 2.5), ("Under 2.5", 1 - p_over, "q_under", tot < 2.5)]:
+        righe.append(pd.DataFrame({**base, "mercato": "Under/Over", "esito": es, "p": pp,
+                                   "quota": d[col].values, "chius": np.nan, "vinta": win}))
+    c = pd.concat(righe, ignore_index=True).dropna(subset=["p", "quota"])
+    c["giornata"] = chiave_giornata(c.data)
+    c["chius"] = c.chius.fillna(c.quota)
+    return c
+
+REGOLE = [{"quota_min": qm, "mercati": mk, "valore_min": vm}
+          for qm in (1.20, 1.35, 1.50, 1.70) for mk in ("1X2", "1X2 + Under/Over") for vm in (None, -0.03, 0.0)]
+REGOLA_BASE = {"quota_min": 1.35, "mercati": "1X2 + Under/Over", "valore_min": None}
+
+def descrivi(r_):
+    v = "nessun filtro sul valore" if r_["valore_min"] is None else f"valore almeno {r_['valore_min']:+.0%}"
+    return f"quota almeno {r_['quota_min']:.2f}".replace(".", ",") + f", mercati {r_['mercati']}, {v}"
+
+def applica(c, r_, n=1):
+    x = c[c.quota >= r_["quota_min"]]
+    if r_["mercati"] == "1X2":
+        x = x[x.mercato == "1X2"]
+    if r_["valore_min"] is not None:
+        x = x[x.p * x.quota - 1 >= r_["valore_min"]]
+    x = x.sort_values(["giornata", "p"], ascending=[True, False]).drop_duplicates(["giornata", "match"])
+    return x.groupby("giornata").head(n)
+
+def bilancio(pk, col="quota"):
+    n = len(pk)
+    if not n:
+        return {"giocate": 0}
+    prof = float(np.where(pk.vinta, pk[col] - 1, -1).sum())
+    return {"giocate": n, "vinte": int(pk.vinta.sum()), "percentuale_vinte": round(float(pk.vinta.mean()), 3),
+            "prob_media": round(float(pk.p.mean()), 3), "quota_media": round(float(pk[col].mean()), 2),
+            "unita": round(prof, 1), "resa": round(prof / n, 4)}
+
+def resa_regola(c, r_):
+    b = bilancio(applica(c, r_))
+    return b["resa"] if b["giocate"] >= 20 else -1
+
+def multipla(c, r_, n):
+    pk = applica(c, r_, n)
+    g = pk.groupby("giornata").agg(k=("p", "size"), vinta=("vinta", "all"), quota=("quota", "prod"), p=("p", "prod"))
+    return bilancio(g[g.k == n])
+
+cand = candidati_storici(tt, P_comb, p_blend.reindex(tt.index).values)
+GG_STAGIONI, scelte_impara = [], []
+for i, st_ in enumerate(TEST_STAGIONI):
+    passato = cand[cand.stagione.isin(TEST_STAGIONI[:i])]
+    regola = max(REGOLE, key=lambda r_: resa_regola(passato, r_)) if i >= 2 else REGOLA_BASE
+    pk = applica(cand[cand.stagione == st_], regola)
+    scelte_impara.append(pk)
+    GG_STAGIONI.append({"stagione": f"20{st_[:2]}/{st_[2:]}", "regola": descrivi(regola), **bilancio(pk),
+                        "resa_chiusura": bilancio(pk, "chius").get("resa")})
+impara = pd.concat(scelte_impara)
+REGOLA_OGGI = max(REGOLE, key=lambda r_: resa_regola(cand, r_))
+GG_CONFRONTO = [
+    {"strategia": "Una singola: l'esito più probabile con quota almeno 1,35", **bilancio(applica(cand, REGOLA_BASE))},
+    {"strategia": "Una singola: regola che impara dalle stagioni precedenti", **bilancio(impara)},
+    {"strategia": "Doppia: le 2 giocate più probabili", **multipla(cand, REGOLA_BASE, 2)},
+    {"strategia": "Tripla: le 3 giocate più probabili", **multipla(cand, REGOLA_BASE, 3)},
+]
+print(pd.DataFrame(GG_CONFRONTO).to_string(index=False))
+print(pd.DataFrame(GG_STAGIONI).to_string(index=False))
+tempo("Regola usata per la giocata della giornata: " + descrivi(REGOLA_OGGI))
+
 # ==== Previsioni per la prossima giornata di Serie A
 fin = prepara(df[df.esito.notna() & (df.stagione >= prima_train) & df.lega.isin(LEGHE_SCELTA)])
 ALTERNATIVE = [COLS_SCELTA, [c for c in COLS_SCELTA if c not in PIN + CAL], FEAT_A, BASE + ["diff_valore"], BASE + BOOK, BASE]
@@ -784,7 +865,7 @@ def mercati(P):
 def num(x, nd=4):
     return None if x is None or (isinstance(x, float) and not np.isfinite(x)) or pd.isna(x) else round(float(x), nd)
 
-partite, righe_csv, righe_storico, piano = [], [], [], []
+partite, righe_csv, righe_storico, piano, cand_fut = [], [], [], [], []
 for r in prepara(df[df.futura]).itertuples():
     scelto = None
     for cols, mdl in MODELLI_FIN:
@@ -804,6 +885,13 @@ for r in prepara(df[df.futura]).itertuples():
     else:
         P = tabella_tarata(r.gol_attesi_mod, pc[0], pc[1], RHO_A)
     ms = mercati(P)
+    _base = {"match": f"{r.casa} - {r.trasf}", "partita": f"{r.casa} - {r.trasf}", "casa": r.casa, "trasf": r.trasf,
+             "stagione": r.stagione, "data": r.data, "ora": getattr(r, "ora", "")}
+    for k_, es_ in enumerate(["1", "2", "X"]):
+        cand_fut.append({**_base, "mercato": "1X2", "esito": es_, "p": float(pc[k_]), "quota": [r.q1, r.q2, r.qX][k_]})
+    _po = ms[("Under/Over", "Over 2.5")]
+    cand_fut.append({**_base, "mercato": "Under/Over", "esito": "Over 2.5", "p": float(_po), "quota": r.q_over})
+    cand_fut.append({**_base, "mercato": "Under/Over", "esito": "Under 2.5", "p": float(1 - _po), "quota": r.q_under})
     ms.update({("1X2", "1"): pc[0], ("1X2", "X"): pc[2], ("1X2", "2"): pc[1],
                ("Doppia chance", "1X"): pc[0] + pc[2], ("Doppia chance", "X2"): pc[2] + pc[1],
                ("Doppia chance", "12"): pc[0] + pc[1]})
@@ -844,6 +932,43 @@ tot_piano = sum(g_["percentuale"] for g_ in piano)
 for g_ in piano:
     g_["percentuale"] = round(g_["percentuale"] * min(1.0, MAX_GIORNO / tot_piano), 4) if tot_piano else 0
 tempo(f"Previsioni calcolate: {len(partite)}")
+
+# Giocata della giornata in corso: una volta pubblicata non cambia più
+os.makedirs("docs", exist_ok=True)
+F_GIOCATE = "docs/giocate.csv"
+giocate_reg = pd.read_csv(F_GIOCATE, dtype={"stagione": str, "giornata": str}) if os.path.exists(F_GIOCATE) else pd.DataFrame()
+GIOCATA, ALTERNATIVE_GG = None, []
+cf = pd.DataFrame(cand_fut)
+if len(cf):
+    cf["quota"] = pd.to_numeric(cf.quota, errors="coerce")
+    cf = cf.dropna(subset=["quota"]).sort_values("data")
+if len(cf):
+    cf["giornata"] = chiave_giornata(cf.data)
+    prossima = cf[cf.giornata == cf.giornata.iloc[0]]
+    sel = applica(prossima, REGOLA_OGGI, 3)
+    if sel.empty:
+        sel = applica(prossima, REGOLA_BASE, 3)
+    def _riga(x):
+        return {"giornata": x.giornata, "stagione": x.stagione, "data": str(pd.Timestamp(x.data).date()),
+                "ora": "" if str(x.ora).lower() in ("nan", "none") else str(x.ora),
+                "partita": x.partita, "casa": x.casa, "trasf": x.trasf, "mercato": x.mercato, "esito": x.esito,
+                "p": round(float(x.p), 4), "quota": round(float(x.quota), 2), "quota_giusta": round(1 / float(x.p), 2)}
+    righe_sel = [_riga(x) for x in sel.itertuples()]
+    gia = (len(giocate_reg) and (giocate_reg.giornata == prossima.giornata.iloc[0]).any())
+    if gia:
+        _g = giocate_reg[giocate_reg.giornata == prossima.giornata.iloc[0]].iloc[0].to_dict()
+        GIOCATA = {**{k: (None if isinstance(v, float) and not np.isfinite(v) else v) for k, v in _g.items()}, "congelata": True}
+    elif righe_sel:
+        GIOCATA = {**righe_sel[0], "pubblicata": pd.Timestamp.now(tz="Europe/Rome").strftime("%Y-%m-%d %H:%M"),
+                   "regola": descrivi(REGOLA_OGGI), "congelata": False}
+        giocate_reg = pd.concat([giocate_reg, pd.DataFrame([{k: v for k, v in GIOCATA.items() if k != "congelata"}])],
+                                ignore_index=True)
+    ALTERNATIVE_GG = [x for x in righe_sel if GIOCATA is None or x["partita"] != GIOCATA["partita"]][:2]
+    GIORNATA_DATE = [str(prossima.data.min().date()), str(prossima.data.max().date())]
+else:
+    GIORNATA_DATE = []
+if len(giocate_reg):
+    giocate_reg.to_csv(F_GIOCATE, index=False)
 
 # ==== Storico: salva le previsioni e confrontale con i risultati
 os.makedirs("docs", exist_ok=True)
@@ -900,6 +1025,25 @@ def valuta_storico(s):
 
 riep_storico, ultime_storico = valuta_storico(storico) if len(storico) else ({"partite": 0}, [])
 
+def valuta_giocate(g):
+    if not len(g):
+        return {"giocate": 0}, []
+    ris = giocate[giocate.lega == PRINCIPALE][["stagione", "casa", "trasf", "gol_c", "gol_t"]]
+    g = g.drop(columns=[c for c in ["gol_c", "gol_t"] if c in g]).merge(ris, on=["stagione", "casa", "trasf"], how="left")
+    g = g.dropna(subset=["gol_c"])
+    if g.empty:
+        return {"giocate": 0}, []
+    t, gd = g.gol_c + g.gol_t, g.gol_c - g.gol_t
+    v = np.select([g.esito == "1", g.esito == "X", g.esito == "2", g.esito == "Over 2.5"],
+                  [gd > 0, gd == 0, gd < 0, t > 2.5], t < 2.5).astype(bool)
+    prof = float(np.where(v, g.quota - 1, -1).sum())
+    elenco = [{"data": x.data, "partita": x.partita, "giocata": x.esito, "quota": x.quota,
+               "risultato": f"{int(x.gol_c)}-{int(x.gol_t)}", "vinta": bool(vv)}
+              for x, vv in zip(g.itertuples(), v)][::-1][:20]
+    return {"giocate": int(len(g)), "vinte": int(v.sum()), "unita": round(prof, 1), "resa": round(prof / len(g), 3)}, elenco
+
+riep_giocate, elenco_giocate = valuta_giocate(giocate_reg)
+
 # ==== Scrittura dei risultati per la pagina
 valore = sorted(
     [{"partita": f'{p["casa"]} - {p["trasf"]}', "data": p["data"], "mercato": m_, **v}
@@ -936,8 +1080,11 @@ dati = {
         "chiusura": {**CHIUS, "sim": tab_json(SIM_CHIUS)},
         "kelly": KELLY,
         "per_stagione": PER_STAGIONE,
+        "giocata_giornata": {"confronto": GG_CONFRONTO, "per_stagione": GG_STAGIONI, "regola_oggi": descrivi(REGOLA_OGGI)},
     },
-    "storico": {"riepilogo": riep_storico, "ultime": ultime_storico},
+    "storico": {"riepilogo": riep_storico, "ultime": ultime_storico,
+                "giocate": {"riepilogo": riep_giocate, "elenco": elenco_giocate}},
+    "giocata": {"scelta": GIOCATA, "alternative": ALTERNATIVE_GG, "date": GIORNATA_DATE, "regola": descrivi(REGOLA_OGGI)},
 }
 with open("docs/dati.json", "w", encoding="utf-8") as f:
     json.dump(dati, f, ensure_ascii=False, indent=1, default=str)
