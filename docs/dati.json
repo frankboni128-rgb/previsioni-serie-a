@@ -1,5 +1,5 @@
 {
- "aggiornato": "2026-10-12 22:20",
+ "aggiornato": "2026-10-12 23:53",
  "stagione": "2026/27",
  "note": [],
  "partite": [
@@ -6991,7 +6991,7 @@
    "quota_giusta": 3.28,
    "pubblicata": "2026-10-12 22:20",
    "regola": "quota almeno 1,70, mercati 1X2, valore almeno -3%",
-   "congelata": false
+   "congelata": true
   },
   "alternative": [],
   "date": [
