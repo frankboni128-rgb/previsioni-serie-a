@@ -251,17 +251,17 @@ function sezioneEsperimenti(a){
   const copVals = Object.values(cop);
   const copMedia = copVals.length ? Math.round(100 * copVals.reduce((t, v) => t + v, 0) / copVals.length) : null;
   return `<h3>Cosa abbiamo provato</h3>
-    <p class="lead">Ogni riga aggiunge qualcosa al modello. Tutte le versioni sono provate sulle stesse partite di Serie A.
+    <p class="lead">Ogni riga cambia qualcosa nel modello. "Solo quote del bookmaker" è il punto di riferimento: le altre versioni servono solo se fanno meglio di quella. "Pesi temporali" dà più importanza alle stagioni recenti; "calendario" aggiunge giorni di riposo, turni infrasettimanali e fase della stagione. Tutte le versioni sono provate sulle stesse partite di Serie A.
     ${chius ? `Per confronto, l'errore delle quote di chiusura su queste partite è ${n4b(chius.errore_chiusura_serie_a)}.` : ""}
     La resa è quella delle giocate con valore sopra il 5%, pagate alla quota di chiusura; il vantaggio sulla chiusura è positivo solo se il modello coglie davvero qualcosa che il mercato non vede.</p>
-    <div class="scroll"><table><thead><tr><th>Versione</th><th>Errore Serie A</th><th>Errore 5 campionati</th><th>Vantaggio sulla chiusura</th><th>Resa</th><th>100 € diventano</th></tr></thead><tbody>
-    ${e.map(x => `<tr${x.versione === a.versione ? ' class="valore"' : ""}><td>${esc(x.versione)}</td><td>${n4b(x.errore_serie_a)}</td>
+    <div class="scroll"><table><thead><tr><th>Versione</th><th>Variabili</th><th>Errore Serie A</th><th>Errore 5 campionati</th><th>Vantaggio sulla chiusura</th><th>Resa</th><th>100 € diventano</th></tr></thead><tbody>
+    ${e.map(x => `<tr${x.versione === a.versione ? ' class="valore"' : ""}><td>${esc(x.versione)}</td><td>${x.variabili ?? "—"}</td><td>${n4b(x.errore_serie_a)}</td>
       <td>${n4b(x.errore_cinque)}</td>
       <td class="${x.clv_serie_a > 0 ? "esito-ok" : "esito-ko"}">${pc1(x.clv_serie_a)}</td>
       <td class="${x.resa_serie_a > 0 ? "esito-ok" : x.resa_serie_a < 0 ? "esito-ko" : ""}">${pc1(x.resa_serie_a)}</td>
       <td>${x.kelly_serie_a == null ? "—" : euro(x.kelly_serie_a)}</td></tr>`).join("")}
     </tbody></table></div>
-    <p class="avviso-val">Evidenziata la versione usata per le previsioni. Le formazioni ufficiali arrivano solo un'ora prima della partita, quindi quella versione serve a capire se valgono la pena, non per le previsioni quotidiane.${copMedia != null ? ` Formazioni disponibili per il ${copMedia}% delle partite di test.` : ""}
+    <p class="avviso-val">Evidenziata la versione usata per le previsioni: tra quelle con un errore entro 0,001 dalla migliore, quella con meno variabili, perché un modello più semplice regge meglio sulle partite future. Le formazioni ufficiali arrivano solo un'ora prima della partita, quindi quella versione serve a capire se valgono la pena, non per le previsioni quotidiane.${copMedia != null ? ` Formazioni disponibili per il ${copMedia}% delle partite di test.` : ""}
     ${a.errore_formazioni ? ` Formazioni non collegate: ${esc(a.errore_formazioni)}` : ""}</p>`;
 }
 

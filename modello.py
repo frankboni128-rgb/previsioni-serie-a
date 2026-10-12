@@ -141,6 +141,17 @@ df["kc"], df["kt"] = (df.lega + "|" + df.casa).astype(object), (df.lega + "|" + 
 df["esito"] = np.where(df.futura, None, np.select([df.gol_c > df.gol_t, df.gol_c == df.gol_t], ["1", "X"], "2"))
 df["match_id"] = df.index
 
+# Variabili di calendario: giorni di riposo (solo campionato), turno infrasettimanale, fase della stagione
+_l = pd.concat([pd.DataFrame({"match_id": df.match_id, "data": df.data, "k": df.kc, "casa": 1}),
+                pd.DataFrame({"match_id": df.match_id, "data": df.data, "k": df.kt, "casa": 0})]).sort_values(["k", "data", "match_id"])
+_l["riposo"] = _l.groupby("k").data.diff().dt.days.clip(2, 14).fillna(14)
+_r = _l.pivot_table(index="match_id", columns="casa", values="riposo", aggfunc="first")
+df["diff_riposo"] = (_r[1] - _r[0]).reindex(df.match_id).values
+df["infrasett"] = df.data.dt.dayofweek.isin([1, 2, 3]).astype(float)
+_inizio = df.groupby(["lega", "stagione"]).data.transform("min")
+df["fase"] = ((df.data - _inizio).dt.days / 290).clip(0, 1)
+del _l, _r
+
 def prob_da_quote(cols):
     inv = 1 / df[cols]
     return inv.div(inv.sum(axis=1), axis=0).values
@@ -459,32 +470,50 @@ PIN = ["pin_1v2", "pin_X", "dis_1v2"]
 FEAT_A = BASE + ["diff_valore"] + BOOK
 prima_train = codice(PRIMA_XG + 1) if USA_XG else "1314"
 TUTTE = list(CAMPIONATI)
+CAL = ["diff_riposo", "infrasett", "fase", "fase_x_book"]
+HALFLIFE_STAGIONI = 3        # una stagione di 3 anni fa pesa la metà di quella appena finita
+# (colonne, campionati, pesi temporali)
 VERSIONI = {
-    "Modello attuale (solo Serie A)": (FEAT_A, [PRINCIPALE]),
-    "+ altri 4 campionati": (FEAT_A, TUTTE),
-    "+ quote Pinnacle": (FEAT_A + PIN, TUTTE),
+    "Solo quote del bookmaker": (BOOK, TUTTE, False),
+    "Modello attuale (solo Serie A)": (FEAT_A, [PRINCIPALE], False),
+    "+ altri 4 campionati": (FEAT_A, TUTTE, False),
+    "+ quote Pinnacle": (FEAT_A + PIN, TUTTE, False),
+    "+ pesi temporali": (FEAT_A + PIN, TUTTE, True),
+    "+ calendario": (FEAT_A + PIN + CAL, TUTTE, True),
+    "Semplice: quote + valore rosa + xG": (BOOK + PIN + ["diff_valore"] + (["diff_xg"] if USA_XG else []), TUTTE, True),
 }
 if USA_XI:
-    VERSIONI["+ formazioni ufficiali"] = (FEAT_A + PIN + ["diff_xi"], TUTTE)
+    VERSIONI["+ formazioni ufficiali"] = (FEAT_A + PIN + ["diff_xi"], TUTTE, False)
 
-def allena(train, cols):
-    return make_pipeline(StandardScaler(), LogisticRegression(max_iter=3000)).fit(train[cols], train.esito)
+def pesi(train, anno_rif):
+    if train is None:
+        return None
+    anni = train.stagione.str[:2].astype(int) + 2000
+    return (0.5 ** ((anno_rif - 1 - anni).clip(lower=0) / HALFLIFE_STAGIONI)).values
+
+def allena(train, cols, pesata=False, anno_rif=None):
+    m = make_pipeline(StandardScaler(), LogisticRegression(max_iter=3000))
+    if pesata:
+        return m.fit(train[cols], train.esito, logisticregression__sample_weight=pesi(train, anno_rif))
+    return m.fit(train[cols], train.esito)
 
 def prepara(d):
     d = d.copy()
     d["diff_xi"] = d["diff_xi"].fillna(0.0)      # formazione non nota = nessuna informazione
+    d["fase_x_book"] = d["fase"] * d["book_1v2"]
     return d
 
 pool = prepara(df[df.esito.notna() & (df.stagione >= prima_train)].dropna(subset=FEAT_A + PIN))
 test_all = pool[pool.stagione.isin(TEST_STAGIONI)]
 PRED = {}
-for nome_v, (cols, leghe) in VERSIONI.items():
+for nome_v, (cols, leghe, pesata) in VERSIONI.items():
     out = []
     for ts in TEST_STAGIONI:
         train = pool[(pool.stagione < ts) & pool.lega.isin(leghe)]
         te = test_all[test_all.stagione == ts] if len(leghe) > 1 else test_all[(test_all.stagione == ts) & (test_all.lega == PRINCIPALE)]
         if len(te) and len(train) > 500:
-            out.append(pd.DataFrame(allena(train, cols).predict_proba(te[cols]), index=te.index, columns=CLASSI))
+            mdl = allena(train, cols, pesata, 2000 + int(ts[:2]))
+            out.append(pd.DataFrame(mdl.predict_proba(te[cols]), index=te.index, columns=CLASSI))
     PRED[nome_v] = pd.concat(out) if out else pd.DataFrame(columns=CLASSI)
     tempo(f"Test: {nome_v}")
 
@@ -541,7 +570,7 @@ for nome_v, pr in PRED.items():
     ta = test_all.loc[pr.index]
     ma = (ta.lega == PRINCIPALE).values
     P_ = pr.values
-    riga = {"versione": nome_v}
+    riga = {"versione": nome_v, "variabili": len(VERSIONI[nome_v][0])}
     for tag, msk in [("serie_a", ma), ("cinque", np.ones(len(ta), bool))]:
         if msk.sum() < 100 or (tag == "cinque" and ma.all()):
             continue
@@ -560,9 +589,13 @@ for nome_v, pr in PRED.items():
 print(pd.DataFrame(ESPERIMENTI).to_string(index=False))
 
 # Versione per le previsioni: la migliore tra quelle usabili prima della partita (le formazioni arrivano troppo tardi)
-usabili = [e for e in ESPERIMENTI if e["versione"] != "+ formazioni ufficiali"]
-SCELTA = min(usabili, key=lambda e: e["errore_serie_a"])["versione"]
-COLS_SCELTA, LEGHE_SCELTA = VERSIONI[SCELTA]
+# Parsimonia: tra le versioni entro 0,001 dalla migliore si sceglie quella con meno variabili
+TOLLERANZA = 0.001
+usabili = [e for e in ESPERIMENTI if e["versione"] not in ("+ formazioni ufficiali", "Solo quote del bookmaker")]
+migliore = min(e["errore_serie_a"] for e in usabili)
+SCELTA = min([e for e in usabili if e["errore_serie_a"] <= migliore + TOLLERANZA],
+             key=lambda e: (e["variabili"], e["errore_serie_a"]))["versione"]
+COLS_SCELTA, LEGHE_SCELTA, PESATA_SCELTA = VERSIONI[SCELTA]
 tempo(f"Versione scelta per le previsioni: {SCELTA}")
 
 # ==== Strategia "Pinnacle contro gli altri bookmaker" (nessun modello: solo quote)
@@ -713,7 +746,7 @@ print(tab_ou.to_string())
 
 # ==== Previsioni per la prossima giornata di Serie A
 fin = prepara(df[df.esito.notna() & (df.stagione >= prima_train) & df.lega.isin(LEGHE_SCELTA)])
-ALTERNATIVE = [COLS_SCELTA, FEAT_A, BASE + ["diff_valore"], BASE + BOOK, BASE]
+ALTERNATIVE = [COLS_SCELTA, [c for c in COLS_SCELTA if c not in PIN + CAL], FEAT_A, BASE + ["diff_valore"], BASE + BOOK, BASE]
 MODELLI_FIN = []
 for cols in ALTERNATIVE:
     cols = [c for c in cols if c != "diff_xi"]
@@ -721,7 +754,7 @@ for cols in ALTERNATIVE:
         continue
     tr_ = fin.dropna(subset=cols)
     if len(tr_) > 500:
-        MODELLI_FIN.append((cols, allena(tr_, cols)))
+        MODELLI_FIN.append((cols, allena(tr_, cols, PESATA_SCELTA, STAGIONE_CORRENTE + 1)))
 mod_ou = allena_ou(ev_ou)
 
 def mercati(P):
@@ -752,7 +785,7 @@ def num(x, nd=4):
     return None if x is None or (isinstance(x, float) and not np.isfinite(x)) or pd.isna(x) else round(float(x), nd)
 
 partite, righe_csv, righe_storico, piano = [], [], [], []
-for r in df[df.futura].itertuples():
+for r in prepara(df[df.futura]).itertuples():
     scelto = None
     for cols, mdl in MODELLI_FIN:
         x = pd.DataFrame([{c: getattr(r, c) for c in cols}])
