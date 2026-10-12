@@ -1,5 +1,5 @@
 {
- "aggiornato": "2026-10-12 16:11",
+ "aggiornato": "2026-10-12 22:20",
  "stagione": "2026/27",
  "note": [],
  "partite": [
@@ -6830,12 +6830,174 @@
     "giocate_valore": 14,
     "resa_valore": -0.527
    }
-  ]
+  ],
+  "giocata_giornata": {
+   "confronto": [
+    {
+     "strategia": "Una singola: l'esito più probabile con quota almeno 1,35",
+     "giocate": 299,
+     "vinte": 199,
+     "percentuale_vinte": 0.666,
+     "prob_media": 0.674,
+     "quota_media": 1.47,
+     "unita": -6.8,
+     "resa": -0.0229
+    },
+    {
+     "strategia": "Una singola: regola che impara dalle stagioni precedenti",
+     "giocate": 299,
+     "vinte": 175,
+     "percentuale_vinte": 0.585,
+     "prob_media": 0.591,
+     "quota_media": 1.67,
+     "unita": -7.9,
+     "resa": -0.0263
+    },
+    {
+     "strategia": "Doppia: le 2 giocate più probabili",
+     "giocate": 275,
+     "vinte": 113,
+     "percentuale_vinte": 0.411,
+     "prob_media": 0.439,
+     "quota_media": 2.21,
+     "unita": -26.5,
+     "resa": -0.0963
+    },
+    {
+     "strategia": "Tripla: le 3 giocate più probabili",
+     "giocate": 272,
+     "vinte": 71,
+     "percentuale_vinte": 0.261,
+     "prob_media": 0.272,
+     "quota_media": 3.49,
+     "unita": -28.1,
+     "resa": -0.1034
+    }
+   ],
+   "per_stagione": [
+    {
+     "stagione": "2019/20",
+     "regola": "quota almeno 1,35, mercati 1X2 + Under/Over, nessun filtro sul valore",
+     "giocate": 42,
+     "vinte": 26,
+     "percentuale_vinte": 0.619,
+     "prob_media": 0.661,
+     "quota_media": 1.49,
+     "unita": -2.7,
+     "resa": -0.0652,
+     "resa_chiusura": -0.076
+    },
+    {
+     "stagione": "2020/21",
+     "regola": "quota almeno 1,35, mercati 1X2 + Under/Over, nessun filtro sul valore",
+     "giocate": 44,
+     "vinte": 27,
+     "percentuale_vinte": 0.614,
+     "prob_media": 0.688,
+     "quota_media": 1.47,
+     "unita": -4.2,
+     "resa": -0.0966,
+     "resa_chiusura": -0.1095
+    },
+    {
+     "stagione": "2021/22",
+     "regola": "quota almeno 1,70, mercati 1X2 + Under/Over, nessun filtro sul valore",
+     "giocate": 42,
+     "vinte": 29,
+     "percentuale_vinte": 0.69,
+     "prob_media": 0.566,
+     "quota_media": 1.75,
+     "unita": 8.8,
+     "resa": 0.2102,
+     "resa_chiusura": 0.2186
+    },
+    {
+     "stagione": "2022/23",
+     "regola": "quota almeno 1,70, mercati 1X2 + Under/Over, nessun filtro sul valore",
+     "giocate": 41,
+     "vinte": 25,
+     "percentuale_vinte": 0.61,
+     "prob_media": 0.556,
+     "quota_media": 1.74,
+     "unita": 2.5,
+     "resa": 0.0622,
+     "resa_chiusura": 0.0651
+    },
+    {
+     "stagione": "2023/24",
+     "regola": "quota almeno 1,70, mercati 1X2 + Under/Over, nessun filtro sul valore",
+     "giocate": 45,
+     "vinte": 27,
+     "percentuale_vinte": 0.6,
+     "prob_media": 0.548,
+     "quota_media": 1.76,
+     "unita": 1.5,
+     "resa": 0.0333,
+     "resa_chiusura": 0.0291
+    },
+    {
+     "stagione": "2024/25",
+     "regola": "quota almeno 1,70, mercati 1X2 + Under/Over, nessun filtro sul valore",
+     "giocate": 44,
+     "vinte": 24,
+     "percentuale_vinte": 0.545,
+     "prob_media": 0.558,
+     "quota_media": 1.76,
+     "unita": -2.4,
+     "resa": -0.0552,
+     "resa_chiusura": -0.0523
+    },
+    {
+     "stagione": "2025/26",
+     "regola": "quota almeno 1,70, mercati 1X2 + Under/Over, nessun filtro sul valore",
+     "giocate": 41,
+     "vinte": 17,
+     "percentuale_vinte": 0.415,
+     "prob_media": 0.558,
+     "quota_media": 1.74,
+     "unita": -11.3,
+     "resa": -0.2761,
+     "resa_chiusura": -0.281
+    }
+   ],
+   "regola_oggi": "quota almeno 1,70, mercati 1X2, valore almeno -3%"
+  }
  },
  "storico": {
   "riepilogo": {
    "partite": 0
   },
-  "ultime": []
+  "ultime": [],
+  "giocate": {
+   "riepilogo": {
+    "giocate": 0
+   },
+   "elenco": []
+  }
+ },
+ "giocata": {
+  "scelta": {
+   "giornata": "2026-41W",
+   "stagione": "2627",
+   "data": "2026-10-12",
+   "ora": "19:45",
+   "partita": "Torino - Udinese",
+   "casa": "Torino",
+   "trasf": "Udinese",
+   "mercato": "1X2",
+   "esito": "X",
+   "p": 0.3049,
+   "quota": 3.2,
+   "quota_giusta": 3.28,
+   "pubblicata": "2026-10-12 22:20",
+   "regola": "quota almeno 1,70, mercati 1X2, valore almeno -3%",
+   "congelata": false
+  },
+  "alternative": [],
+  "date": [
+   "2026-10-12",
+   "2026-10-12"
+  ],
+  "regola": "quota almeno 1,70, mercati 1X2, valore almeno -3%"
  }
 }
