@@ -104,6 +104,17 @@ for div in CAMPIONATI:
 giocate = pd.concat(blocchi, ignore_index=True)
 giocate["futura"] = False
 
+def inizio_italiano(data, ora):
+    """Data e ora (ora inglese, come le pubblica football-data) -> orario italiano, senza fuso."""
+    try:
+        o = str(ora).strip()
+        if not re.match(r"^\d{1,2}:\d{2}$", o):
+            return None
+        ts = pd.Timestamp(f"{pd.Timestamp(data).date()} {o}").tz_localize("Europe/London").tz_convert("Europe/Rome")
+        return ts.tz_localize(None)
+    except Exception:
+        return None
+
 # ==== Prossima giornata di Serie A
 oggi = pd.Timestamp.today().normalize()
 fut = pd.DataFrame()
@@ -115,6 +126,10 @@ try:
                         "data": pd.to_datetime(raw["Date"], dayfirst=True, format="mixed"),
                         "casa": raw["HomeTeam"].astype(str).str.strip(), "trasf": raw["AwayTeam"].astype(str).str.strip()})
     fut = leggi_quote(raw, fut)
+    # football-data indica l'orario inglese: lo converto in orario italiano
+    _ini = [inizio_italiano(d_, o_) for d_, o_ in zip(fut.data, fut.ora)]
+    fut["inizio"] = [x.strftime("%Y-%m-%d %H:%M") if x is not None else None for x in _ini]
+    fut["ora"] = [x.strftime("%H:%M") if x is not None else "" for x in _ini]
 except Exception as e:
     print("Calendario automatico non disponibile:", e)
     NOTE.append("Calendario della prossima giornata non disponibile su football-data.")
@@ -886,7 +901,7 @@ for r in prepara(df[df.futura]).itertuples():
         P = tabella_tarata(r.gol_attesi_mod, pc[0], pc[1], RHO_A)
     ms = mercati(P)
     _base = {"match": f"{r.casa} - {r.trasf}", "partita": f"{r.casa} - {r.trasf}", "casa": r.casa, "trasf": r.trasf,
-             "stagione": r.stagione, "data": r.data, "ora": getattr(r, "ora", "")}
+             "stagione": r.stagione, "data": r.data, "ora": getattr(r, "ora", ""), "inizio": getattr(r, "inizio", None)}
     for k_, es_ in enumerate(["1", "2", "X"]):
         cand_fut.append({**_base, "mercato": "1X2", "esito": es_, "p": float(pc[k_]), "quota": [r.q1, r.q2, r.qX][k_]})
     _po = ms[("Under/Over", "Over 2.5")]
@@ -937,37 +952,62 @@ tempo(f"Previsioni calcolate: {len(partite)}")
 os.makedirs("docs", exist_ok=True)
 F_GIOCATE = "docs/giocate.csv"
 giocate_reg = pd.read_csv(F_GIOCATE, dtype={"stagione": str, "giornata": str}) if os.path.exists(F_GIOCATE) else pd.DataFrame()
-GIOCATA, ALTERNATIVE_GG = None, []
+GIOCATA, ALTERNATIVE_GG, GIORNATA_DATE = None, [], []
+ADESSO = pd.Timestamp.now(tz="Europe/Rome").tz_localize(None)
+
+def inizio_riga(x):
+    v = x.get("inizio") if hasattr(x, "get") else None
+    if isinstance(v, str) and v:
+        return pd.Timestamp(v)
+    return inizio_italiano(x.get("data"), x.get("ora"))
+
+# Una giocata scelta quando la partita era già iniziata non è valida: la tolgo
+if len(giocate_reg):
+    _ini = giocate_reg.apply(inizio_riga, axis=1)
+    _pub = pd.to_datetime(giocate_reg.pubblicata, errors="coerce")
+    _no = _ini.notna() & _pub.notna() & (_pub >= _ini)
+    if _no.any():
+        print(f"Tolte {int(_no.sum())} giocate scelte a partita già iniziata")
+    giocate_reg = giocate_reg[~_no].reset_index(drop=True)
+
 cf = pd.DataFrame(cand_fut)
 if len(cf):
     cf["quota"] = pd.to_numeric(cf.quota, errors="coerce")
     cf = cf.dropna(subset=["quota"]).sort_values("data")
 if len(cf):
     cf["giornata"] = chiave_giornata(cf.data)
-    prossima = cf[cf.giornata == cf.giornata.iloc[0]]
-    sel = applica(prossima, REGOLA_OGGI, 3)
-    if sel.empty:
-        sel = applica(prossima, REGOLA_BASE, 3)
+    cf["kick"] = pd.to_datetime(cf.inizio, errors="coerce")
+    ancora = cf.kick.isna() & (cf.data > ADESSO.normalize()) | (cf.kick > ADESSO + pd.Timedelta(minutes=15))
     def _riga(x):
         return {"giornata": x.giornata, "stagione": x.stagione, "data": str(pd.Timestamp(x.data).date()),
                 "ora": "" if str(x.ora).lower() in ("nan", "none") else str(x.ora),
+                "inizio": None if pd.isna(x.kick) else pd.Timestamp(x.kick).strftime("%Y-%m-%d %H:%M"),
                 "partita": x.partita, "casa": x.casa, "trasf": x.trasf, "mercato": x.mercato, "esito": x.esito,
                 "p": round(float(x.p), 4), "quota": round(float(x.quota), 2), "quota_giusta": round(1 / float(x.p), 2)}
-    righe_sel = [_riga(x) for x in sel.itertuples()]
-    gia = (len(giocate_reg) and (giocate_reg.giornata == prossima.giornata.iloc[0]).any())
-    if gia:
-        _g = giocate_reg[giocate_reg.giornata == prossima.giornata.iloc[0]].iloc[0].to_dict()
-        GIOCATA = {**{k: (None if isinstance(v, float) and not np.isfinite(v) else v) for k, v in _g.items()}, "congelata": True}
-    elif righe_sel:
-        GIOCATA = {**righe_sel[0], "pubblicata": pd.Timestamp.now(tz="Europe/Rome").strftime("%Y-%m-%d %H:%M"),
-                   "regola": descrivi(REGOLA_OGGI), "congelata": False}
-        giocate_reg = pd.concat([giocate_reg, pd.DataFrame([{k: v for k, v in GIOCATA.items() if k != "congelata"}])],
-                                ignore_index=True)
-    ALTERNATIVE_GG = [x for x in righe_sel if GIOCATA is None or x["partita"] != GIOCATA["partita"]][:2]
-    GIORNATA_DATE = [str(prossima.data.min().date()), str(prossima.data.max().date())]
-else:
-    GIORNATA_DATE = []
-if len(giocate_reg):
+    for gg in pd.unique(cf.giornata):
+        tutta = cf[cf.giornata == gg]
+        gia = len(giocate_reg) and (giocate_reg.giornata.astype(str) == gg).any()
+        if gia:
+            _g = giocate_reg[giocate_reg.giornata.astype(str) == gg].iloc[0].to_dict()
+            GIOCATA = {**{k: (None if isinstance(v, float) and not np.isfinite(v) else v) for k, v in _g.items()}, "congelata": True}
+            GIORNATA_DATE = [str(tutta.data.min().date()), str(tutta.data.max().date())]
+            break
+        prossima = tutta[ancora[tutta.index]]
+        if prossima.empty:
+            continue                      # giornata già iniziata senza giocata: passo alla successiva
+        sel = applica(prossima, REGOLA_OGGI, 3)
+        if sel.empty:
+            sel = applica(prossima, REGOLA_BASE, 3)
+        righe_sel = [_riga(x) for x in sel.itertuples()]
+        if righe_sel:
+            GIOCATA = {**righe_sel[0], "pubblicata": ADESSO.strftime("%Y-%m-%d %H:%M"),
+                       "regola": descrivi(REGOLA_OGGI), "congelata": False}
+            giocate_reg = pd.concat([giocate_reg, pd.DataFrame([{k: v for k, v in GIOCATA.items() if k != "congelata"}])],
+                                    ignore_index=True)
+            ALTERNATIVE_GG = righe_sel[1:3]
+            GIORNATA_DATE = [str(prossima.data.min().date()), str(prossima.data.max().date())]
+            break
+if len(giocate_reg) or os.path.exists(F_GIOCATE):
     giocate_reg.to_csv(F_GIOCATE, index=False)
 
 # ==== Storico: salva le previsioni e confrontale con i risultati

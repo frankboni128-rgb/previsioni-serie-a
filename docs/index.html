@@ -48,6 +48,14 @@ button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var
 
 /* schedina */
 .schedina{border:2px solid var(--inchiostro)}
+.giocata{border:3px solid var(--segno);padding:14px 16px 12px;margin:0 0 20px;background:var(--carta)}
+.giocata .etichetta{font:600 .95rem var(--cond);color:var(--segno);margin:0 0 4px}
+.giocata .scelta{font:700 2rem/1.05 var(--cond);margin:0}
+.giocata .partita-g{font:600 1.15rem var(--cond);color:var(--tenue);margin:2px 0 10px}
+.giocata .numeri{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:.9rem}
+.giocata .numeri b{font:700 1.35rem var(--cond);display:block;color:var(--inchiostro)}
+.giocata .numeri span{color:var(--tenue)}
+.giocata .alt{margin-top:10px;font-size:.85rem;color:var(--tenue)}
 .intestazione{display:grid;grid-template-columns:1fr repeat(3,56px);font:600 .95rem var(--cond);
   color:var(--tenue);border-bottom:2px solid var(--inchiostro);background:var(--carta2)}
 .intestazione span{padding:6px 10px}.intestazione span:not(:first-child){text-align:center;border-left:1px solid var(--griglia)}
@@ -99,6 +107,18 @@ figure.grafico figcaption{font-size:.82rem;color:var(--tenue);padding:6px 0 4px}
 .linea{fill:none;stroke:var(--inchiostro);stroke-width:2}
 .base{stroke:var(--segno);stroke-dasharray:4 4;stroke-width:1.2}
 .asse{font:500 17px var(--testo);fill:var(--tenue)}
+ol.regole{margin:8px 0 16px;padding-left:1.3em;max-width:62ch}
+ol.regole li{margin:4px 0}
+.budget{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;border:2px solid var(--inchiostro);padding:12px 14px;margin:12px 0}
+.budget label{display:flex;flex-direction:column;font-size:.82rem;color:var(--tenue);gap:4px}
+input.num{font:600 1.1rem var(--cond);width:7.5em;padding:6px 8px;border:1px solid var(--griglia);background:var(--carta);color:var(--inchiostro)}
+input.num:focus-visible{outline:2px solid var(--segno);outline-offset:1px}
+.puntata b{display:block;font:700 1.6rem/1 var(--cond)}
+.scheda-gioco{border:2px solid var(--inchiostro);margin:14px 0}
+.scheda-gioco h3{margin:0;padding:8px 10px;background:var(--carta2);border-bottom:1px solid var(--griglia)}
+.scheda-gioco h3 span{font:500 .85rem var(--testo);color:var(--tenue);margin-left:8px}
+.scheda-gioco td input.num{width:4.6em;font-size:1rem;padding:4px 6px}
+.ok{color:var(--ok);font-weight:600;white-space:nowrap}.ko{color:var(--segno);font-weight:600;white-space:nowrap}
 footer{margin-top:36px;padding-top:12px;border-top:1px solid var(--griglia);font-size:.82rem;color:var(--tenue)}
 footer a{color:var(--inchiostro)}
 @media (max-width:420px){
@@ -119,7 +139,7 @@ footer a{color:var(--inchiostro)}
   </header>
   <nav role="tablist">
     <button role="tab" aria-selected="true" data-vista="giornata">Giornata</button>
-    <button role="tab" aria-selected="false" data-vista="valore">Valore</button>
+    <button role="tab" aria-selected="false" data-vista="valore">Come giocare</button>
     <button role="tab" aria-selected="false" data-vista="fiducia">Affidabilità</button>
     <button role="tab" aria-selected="false" data-vista="storico">Storico</button>
   </nav>
@@ -147,10 +167,33 @@ function trova(p, merc, es){ return (p.mercati[merc] || []).find(v => v.esito ==
 function cerchio(){ return `<svg viewBox="0 0 48 40" preserveAspectRatio="none" aria-hidden="true">
   <ellipse cx="24" cy="20" rx="21" ry="16" transform="rotate(-8 24 20)"/></svg>`; }
 
+const NOME_ESITO = {"1": "vittoria casa (1)", "X": "pareggio (X)", "2": "vittoria trasferta (2)", "Over 2.5": "Over 2.5", "Under 2.5": "Under 2.5"};
+function leggiBudget(){ const x = parseFloat(String(leggiMemoria("budget", "")).replace(",", ".")); return isFinite(x) && x > 0 ? x : null; }
+
+function cartaGiocata(){
+  const G = D.giocata || {}, g = G.scelta;
+  if (!g) return "";
+  const b = leggiBudget(), perc = +leggiMemoria("perc", "2");
+  const alt = (G.alternative || []).map(a => `${esc(a.partita)}: ${esc(NOME_ESITO[a.esito] || a.esito)} a ${q(a.quota)} (${pct(a.p)})`).join(" · ");
+  return `<section class="giocata" aria-label="Giocata della giornata">
+    <p class="etichetta">La giocata della giornata</p>
+    <p class="scelta">${esc(NOME_ESITO[g.esito] || g.esito)}</p>
+    <p class="partita-g">${esc(g.partita)}, ${dataLunga(g.data)}${g.ora ? ", ore " + esc(g.ora) : ""}</p>
+    <div class="numeri">
+      <div><b>${pct(g.p)}</b><span>probabilità secondo il modello</span></div>
+      <div><b>${q(g.quota)}</b><span>quota quando è stata scelta</span></div>
+      <div><b>${q(g.quota_giusta)}</b><span>quota minima da accettare</span></div>
+      <div><b>${b ? euro(b * perc / 100) : perc + "%"}</b><span>puntata, singola${b ? "" : " del budget"}</span></div>
+    </div>
+    ${alt ? `<p class="alt">Le altre due scelte più solide: ${alt}</p>` : ""}
+    <p class="alt">Scelta tra le partite della giornata come l'esito più probabile che rispetta la regola: ${esc(g.regola || G.regola || "")}. Una volta pubblicata non cambia più, così lo storico è onesto.</p>
+  </section>`;
+}
+
 function vistaGiornata(){
-  if (!D.partite.length) return `<div class="vuoto"><strong>Nessuna partita in programma</strong>
+  if (!D.partite.length) return cartaGiocata() + `<div class="vuoto"><strong>Nessuna partita in programma</strong>
     Appena football-data pubblica il calendario della prossima giornata, le previsioni compaiono qui.</div>`;
-  let html = `<div class="schedina"><div class="intestazione"><span>Partita</span><span>1</span><span>X</span><span>2</span></div>`;
+  let html = cartaGiocata() + `<div class="schedina"><div class="intestazione"><span>Partita</span><span>1</span><span>X</span><span>2</span></div>`;
   let giornoPrec = "";
   D.partite.forEach((p, i) => {
     if (p.data !== giornoPrec){ html += `<div class="giorno">${dataLunga(p.data)}</div>`; giornoPrec = p.data; }
@@ -198,22 +241,59 @@ function apriDettaglio(det){
   disegna("1X2");
 }
 
+const ESITI_GIOCO = [["1X2","1","1 (casa)"],["1X2","X","X (pareggio)"],["1X2","2","2 (trasferta)"],
+  ["Under/Over","Over 2.5","Over 2.5"],["Under/Over","Under 2.5","Under 2.5"]];
+function leggiMemoria(k, def){ try { const v = localStorage.getItem(k); return v === null ? def : v; } catch(e){ return def; } }
+function scriviMemoria(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+const numero = t => { const x = parseFloat(String(t).replace(",", ".")); return isFinite(x) && x > 1 ? x : null; };
+
 function vistaValore(){
-  const a = D.affidabilita, s1 = (a.sim_1x2||[]).find(r => r.soglia_valore === ">5%"), so = (a.sim_ou||[]).find(r => r.soglia_valore === ">5%");
-  let html = sezionePiano() + `<h2>Tutte le giocate con valore</h2>
-    <p class="lead">Qui compaiono le giocate in cui la quota del bookmaker è più alta di quella che il modello considera giusta, di almeno il 5%.
-    Il confronto è possibile solo su 1-X-2 e Under/Over 2.5, gli unici mercati di cui abbiamo le quote.</p>`;
-  if (s1 || so) html += `<div class="giudizio"><strong>Prima di fidarti</strong>
-    Nelle stagioni ${a.stagioni_test.join(", ")}, puntando su tutte le giocate come queste:
-    1-X-2 ${s1 ? `${s1.giocate} giocate, risultato ${n1(s1.profitto_unita)} unità (${esc(s1.ROI).replace(".", ",")})` : "—"};
-    Under/Over 2.5 ${so ? `${so.giocate} giocate, risultato ${n1(so.profitto_unita)} unità (${esc(so.ROI).replace(".", ",")})` : "—"}.
-    Quando il modello e il bookmaker non sono d'accordo, spesso sbaglia il modello.</div>`;
-  if (!D.valore.length) return html + `<div class="vuoto"><strong>Nessuna giocata con valore</strong>Per la prossima giornata il modello e il bookmaker sono allineati.</div>`;
-  html += `<div class="scroll"><table><thead><tr><th>Partita</th><th>Giocata</th><th>Prob.</th><th>Quota</th><th>Valore</th></tr></thead><tbody>
-    ${D.valore.map(v => `<tr><td>${esc(v.partita)}</td><td>${esc(v.mercato === "1X2" ? "Esito " + v.esito : v.esito)}</td><td>${pct(v.p)}</td>
-      <td>${q(v.quota_book)}</td><td class="pos">+${Math.round(v.valore*100)}%</td></tr>`).join("")}
-    </tbody></table></div>`;
+  const budget = leggiMemoria("budget", ""), perc = leggiMemoria("perc", "2");
+  let html = `<h2>Come giocare</h2>
+    <ol class="regole">
+      <li>Solo giocate singole, mai multiple: in una multipla il margine del bookmaker si moltiplica.</li>
+      <li>Solo 1-X-2 e Under/Over 2.5: sono i mercati con il margine più basso e dove il modello è più affidabile.</li>
+      <li>Gioca solo se la quota del tuo bookmaker è almeno uguale alla quota minima qui sotto. Se è più bassa, stai pagando troppo.</li>
+      <li>Confronta la stessa giocata su due o tre bookmaker e prendi la quota più alta.</li>
+      <li>Puntata piccola e sempre uguale, con un budget che consideri già speso. Niente rincorse dopo una perdita.</li>
+    </ol>
+    <div class="budget">
+      <label>Budget (€)<input class="num" id="in-budget" inputmode="decimal" value="${esc(budget)}" placeholder="es. 100"></label>
+      <label>Puntata per giocata<select class="num" id="in-perc">
+        ${["1","2","3"].map(p => `<option value="${p}"${p===perc?" selected":""}>${p}% del budget</option>`).join("")}</select></label>
+      <div class="puntata"><span class="avviso-val">Puntata fissa</span><b id="out-puntata">—</b></div>
+    </div>`;
+  if (!D.partite.length) return html + `<div class="vuoto"><strong>Nessuna partita in programma</strong>Le quote minime compaiono qui appena esce il calendario della prossima giornata.</div>`;
+  html += `<p class="lead">Per ogni giocata: la probabilità secondo il modello e la quota minima da accettare. Scrivi la quota del tuo bookmaker: il verdetto ti dice se è sopra la quota minima e di quanto. In grigio, come riferimento, la quota di Bet365.</p>`;
+  D.partite.forEach((p, i) => {
+    html += `<div class="scheda-gioco"><h3>${esc(p.casa)} – ${esc(p.trasf)}<span>${dataLunga(p.data)}${p.ora ? ", ore " + esc(p.ora) : ""}</span></h3>
+      <div class="scroll"><table><thead><tr><th>Giocata</th><th>Quota minima</th><th>Tua quota</th><th>Verdetto</th></tr></thead><tbody>
+      ${ESITI_GIOCO.map(([m, e, lab], j) => { const v = trova(p, m, e); return `<tr><td>${lab}<br><span class="avviso-val">probabilità ${pct(v.p)}</span></td><td>${q(v.quota_giusta)}</td>
+        <td><input class="num quota-in" inputmode="decimal" data-min="${v.quota_giusta ?? ""}" data-v="v${i}-${j}" aria-label="Quota del tuo bookmaker per ${esc(lab)}" placeholder="${v.quota_book != null ? q(v.quota_book) : ""}"></td>
+        <td id="v${i}-${j}">—</td></tr>`; }).join("")}
+      </tbody></table></div></div>`;
+  });
+  const pn = D.piano;
+  if (pn && pn.attivo) html += sezionePiano();
   return html;
+}
+
+function collegaGioco(){
+  const b = document.getElementById("in-budget"), pc = document.getElementById("in-perc"), out = document.getElementById("out-puntata");
+  if (!b) return;
+  const aggiorna = () => {
+    scriviMemoria("budget", b.value); scriviMemoria("perc", pc.value);
+    const x = parseFloat(String(b.value).replace(",", "."));
+    out.textContent = isFinite(x) && x > 0 ? euro(x * (+pc.value) / 100) : "—";
+  };
+  b.oninput = aggiorna; pc.onchange = aggiorna; aggiorna();
+  document.querySelectorAll(".quota-in").forEach(inp => inp.oninput = () => {
+    const cella = document.getElementById(inp.dataset.v), min = parseFloat(inp.dataset.min), x = numero(inp.value);
+    if (!x || !isFinite(min)) { cella.textContent = "—"; cella.className = ""; return; }
+    const diff = x / min - 1;
+    cella.textContent = diff >= 0 ? `Sì, +${(diff * 100).toFixed(0)}%` : `No, ${(diff * 100).toFixed(0)}%`;
+    cella.className = diff >= 0 ? "ok" : "ko";
+  });
 }
 
 function tabSim(rows){
@@ -345,6 +425,21 @@ function sezionePiano(){
     <p class="avviso-val">Totale impegnato: ${(tot * 100).toFixed(1).replace(".", ",")}% del budget. Controlla che la quota del tuo bookmaker sia almeno quella indicata: se è più bassa, la giocata perde il suo vantaggio.</p>`;
 }
 
+function sezioneGiocata(a){
+  const g = a.giocata_giornata;
+  if (!g) return "";
+  const riga = x => `<td>${x.giocate}</td><td>${x.giocate ? pct(x.percentuale_vinte) : "—"}</td><td>${x.giocate ? q(x.quota_media) : "—"}</td>
+      <td class="${x.unita > 0 ? "esito-ok" : x.unita < 0 ? "esito-ko" : ""}">${x.giocate ? n1(x.unita) : "—"}</td><td>${x.giocate ? pc1(x.resa) : "—"}</td>`;
+  return `<h3>La giocata della giornata sulle stagioni passate</h3>
+    <p class="lead">Una giocata per giornata, puntando sempre 1 unità alla quota disponibile prima della partita. La riga "che impara" è la prova più onesta: ogni stagione usa la regola che aveva funzionato meglio nelle stagioni precedenti, senza conoscere il futuro.</p>
+    <div class="scroll"><table><thead><tr><th>Strategia</th><th>Giocate</th><th>Vinte</th><th>Quota media</th><th>Unità</th><th>Resa</th></tr></thead><tbody>
+    ${g.confronto.map(x => `<tr><td>${esc(x.strategia)}</td>${riga(x)}</tr>`).join("")}</tbody></table></div>
+    <p class="lead"><b>Stagione per stagione, regola che impara</b></p>
+    <div class="scroll"><table><thead><tr><th>Stagione</th><th>Giocate</th><th>Vinte</th><th>Quota media</th><th>Unità</th><th>Resa</th></tr></thead><tbody>
+    ${g.per_stagione.map(x => `<tr><td>${esc(x.stagione)}<br><span class="avviso-val">${esc(x.regola)}</span></td>${riga(x)}</tr>`).join("")}</tbody></table></div>
+    <p class="avviso-val">Regola usata oggi, scelta su tutte le stagioni: ${esc(g.regola_oggi)}.</p>`;
+}
+
 function vistaFiducia(){
   const a = D.affidabilita, x = a.x12;
   const diff = x.log_loss_modello - x.log_loss_bookmaker;
@@ -370,6 +465,7 @@ function vistaFiducia(){
     <p class="lead">Una unità su ogni giocata in cui la quota del bookmaker superava la quota giusta del modello.</p>
     <h3>1-X-2</h3>${tabSim(a.sim_1x2 || [])}
     <h3>Under/Over 2.5</h3>${tabSim(a.sim_ou || [])}
+    ${sezioneGiocata(a)}
     ${sezioneEsperimenti(a)}
     ${sezionePinnacle(a)}
     ${sezioneStagioni(a)}
@@ -378,11 +474,24 @@ function vistaFiducia(){
     <p class="avviso-val">Con poche giocate i risultati dipendono molto dalla fortuna. Il margine del bookmaker, circa il 5%, gioca sempre contro.</p>`;
 }
 
+function sezioneStoricoGiocate(){
+  const G = (D.storico.giocate || {}), r = G.riepilogo || {}, el = G.elenco || [];
+  if (!r.giocate) return `<h2>Le giocate della giornata</h2><div class="vuoto"><strong>Nessuna giocata ancora conclusa</strong>Qui compare il bilancio delle giocate della giornata, partita dopo partita.</div>`;
+  return `<h2>Le giocate della giornata</h2>
+    <div class="cifre"><div><b>${r.giocate}</b><span>giocate concluse</span></div>
+      <div><b>${r.vinte}</b><span>vinte</span></div>
+      <div><b>${n1(r.unita)}</b><span>unità di guadagno o perdita</span></div></div>
+    <div class="scroll"><table><thead><tr><th>Partita</th><th>Giocata</th><th>Quota</th><th>Ris.</th><th>Esito</th></tr></thead><tbody>
+    ${el.map(x => `<tr><td>${esc(x.partita)}</td><td>${esc(x.giocata)}</td><td>${q(x.quota)}</td><td>${esc(x.risultato)}</td>
+      <td class="${x.vinta ? "esito-ok" : "esito-ko"}">${x.vinta ? "Vinta" : "Persa"}</td></tr>`).join("")}</tbody></table></div>`;
+}
+
 function vistaStorico(){
   const r = D.storico.riepilogo || {}, u = D.storico.ultime || [];
-  if (!r.partite) return `<h2>Storico</h2><div class="vuoto"><strong>Ancora nessuna partita valutata</strong>
+  const testa = sezioneStoricoGiocate();
+  if (!r.partite) return testa + `<h2>Tutte le previsioni</h2><div class="vuoto"><strong>Ancora nessuna partita valutata</strong>
     Dopo la prima giornata giocata con il modello attivo, qui trovi come sono andate le previsioni.</div>`;
-  return `<h2>Come sono andate le previsioni</h2>
+  return testa + `<h2>Come sono andate le previsioni</h2>
     <p class="lead">Previsioni salvate prima di ogni partita e confrontate con il risultato vero.</p>
     <div class="cifre">
       <div><b>${r.partite}</b><span>partite valutate</span></div>
@@ -403,6 +512,7 @@ function mostra(v){
   const main = document.getElementById("vista");
   main.innerHTML = {giornata: vistaGiornata, valore: vistaValore, fiducia: vistaFiducia, storico: vistaStorico}[v]();
   main.querySelectorAll("details.partita").forEach(d => d.addEventListener("toggle", () => d.open && apriDettaglio(d)));
+  if (v === "valore") collegaGioco();
 }
 
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => mostra(b.dataset.vista));
