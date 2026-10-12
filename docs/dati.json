@@ -1,11 +1,11 @@
 {
- "aggiornato": "2026-10-12 23:53",
+ "aggiornato": "2026-10-13 00:21",
  "stagione": "2026/27",
  "note": [],
  "partite": [
   {
    "data": "2026-10-12",
-   "ora": "17:30",
+   "ora": "18:30",
    "casa": "Atalanta",
    "trasf": "Venezia",
    "valori_usati": true,
@@ -436,7 +436,7 @@
   },
   {
    "data": "2026-10-12",
-   "ora": "19:45",
+   "ora": "20:45",
    "casa": "Torino",
    "trasf": "Udinese",
    "valori_usati": true,
@@ -6976,28 +6976,9 @@
   }
  },
  "giocata": {
-  "scelta": {
-   "giornata": "2026-41W",
-   "stagione": "2627",
-   "data": "2026-10-12",
-   "ora": "19:45",
-   "partita": "Torino - Udinese",
-   "casa": "Torino",
-   "trasf": "Udinese",
-   "mercato": "1X2",
-   "esito": "X",
-   "p": 0.3049,
-   "quota": 3.2,
-   "quota_giusta": 3.28,
-   "pubblicata": "2026-10-12 22:20",
-   "regola": "quota almeno 1,70, mercati 1X2, valore almeno -3%",
-   "congelata": true
-  },
+  "scelta": null,
   "alternative": [],
-  "date": [
-   "2026-10-12",
-   "2026-10-12"
-  ],
+  "date": [],
   "regola": "quota almeno 1,70, mercati 1X2, valore almeno -3%"
  }
 }
