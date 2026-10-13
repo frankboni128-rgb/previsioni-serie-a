@@ -1,871 +1,10 @@
 {
- "aggiornato": "2026-10-13 00:21",
+ "aggiornato": "2026-10-13 14:52",
  "stagione": "2026/27",
- "note": [],
- "partite": [
-  {
-   "data": "2026-10-12",
-   "ora": "18:30",
-   "casa": "Atalanta",
-   "trasf": "Venezia",
-   "valori_usati": true,
-   "gol_attesi": 3.18,
-   "mercati": {
-    "1X2": [
-     {
-      "esito": "1",
-      "p": 0.6151,
-      "quota_giusta": 1.63,
-      "quota_book": 1.57,
-      "valore": -0.034
-     },
-     {
-      "esito": "X",
-      "p": 0.2298,
-      "quota_giusta": 4.35,
-      "quota_book": 4.2,
-      "valore": -0.035
-     },
-     {
-      "esito": "2",
-      "p": 0.155,
-      "quota_giusta": 6.45,
-      "quota_book": 5.75,
-      "valore": -0.108
-     }
-    ],
-    "Doppia chance": [
-     {
-      "esito": "1X",
-      "p": 0.845,
-      "quota_giusta": 1.18,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X2",
-      "p": 0.3849,
-      "quota_giusta": 2.6,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "12",
-      "p": 0.7702,
-      "quota_giusta": 1.3,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Under/Over": [
-     {
-      "esito": "Under 0.5",
-      "p": 0.0503,
-      "quota_giusta": 19.88,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 0.5",
-      "p": 0.9497,
-      "quota_giusta": 1.05,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Under 1.5",
-      "p": 0.1656,
-      "quota_giusta": 6.04,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 1.5",
-      "p": 0.8344,
-      "quota_giusta": 1.2,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Under 2.5",
-      "p": 0.3847,
-      "quota_giusta": 2.6,
-      "quota_book": 2.38,
-      "valore": -0.084
-     },
-     {
-      "esito": "Over 2.5",
-      "p": 0.6153,
-      "quota_giusta": 1.63,
-      "quota_book": 1.57,
-      "valore": -0.034
-     },
-     {
-      "esito": "Under 3.5",
-      "p": 0.6076,
-      "quota_giusta": 1.65,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 3.5",
-      "p": 0.3924,
-      "quota_giusta": 2.55,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Under 4.5",
-      "p": 0.7847,
-      "quota_giusta": 1.27,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 4.5",
-      "p": 0.2153,
-      "quota_giusta": 4.64,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Goal/No Goal": [
-     {
-      "esito": "Goal",
-      "p": 0.5725,
-      "quota_giusta": 1.75,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "No Goal",
-      "p": 0.4275,
-      "quota_giusta": 2.34,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Multigol": [
-     {
-      "esito": "1-2",
-      "p": 0.3344,
-      "quota_giusta": 2.99,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-3",
-      "p": 0.5573,
-      "quota_giusta": 1.79,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-4",
-      "p": 0.7344,
-      "quota_giusta": 1.36,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-5",
-      "p": 0.8469,
-      "quota_giusta": 1.18,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-3",
-      "p": 0.442,
-      "quota_giusta": 2.26,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-4",
-      "p": 0.6191,
-      "quota_giusta": 1.62,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-5",
-      "p": 0.7316,
-      "quota_giusta": 1.37,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3-4",
-      "p": 0.4,
-      "quota_giusta": 2.5,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3-5",
-      "p": 0.5125,
-      "quota_giusta": 1.95,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "4-6",
-      "p": 0.3492,
-      "quota_giusta": 2.86,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Somma gol": [
-     {
-      "esito": "0",
-      "p": 0.0503,
-      "quota_giusta": 19.88,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1",
-      "p": 0.1153,
-      "quota_giusta": 8.67,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.2191,
-      "quota_giusta": 4.56,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3",
-      "p": 0.2229,
-      "quota_giusta": 4.49,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "4",
-      "p": 0.1771,
-      "quota_giusta": 5.65,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "5",
-      "p": 0.1125,
-      "quota_giusta": 8.89,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "6+",
-      "p": 0.1028,
-      "quota_giusta": 9.73,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa -2": [
-     {
-      "esito": "1",
-      "p": 0.2116,
-      "quota_giusta": 4.73,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.1917,
-      "quota_giusta": 5.22,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.5968,
-      "quota_giusta": 1.68,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa -1": [
-     {
-      "esito": "1",
-      "p": 0.4032,
-      "quota_giusta": 2.48,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.2241,
-      "quota_giusta": 4.46,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.3727,
-      "quota_giusta": 2.68,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa +1": [
-     {
-      "esito": "1",
-      "p": 0.8419,
-      "quota_giusta": 1.19,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.1004,
-      "quota_giusta": 9.96,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.0577,
-      "quota_giusta": 17.33,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa +2": [
-     {
-      "esito": "1",
-      "p": 0.9423,
-      "quota_giusta": 1.06,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.0421,
-      "quota_giusta": 23.77,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.0156,
-      "quota_giusta": 64.0,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Risultato esatto": [
-     {
-      "esito": "1-1",
-      "p": 0.1001,
-      "quota_giusta": 9.99,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-1",
-      "p": 0.0989,
-      "quota_giusta": 10.11,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-0",
-      "p": 0.0976,
-      "quota_giusta": 10.25,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-0",
-      "p": 0.0816,
-      "quota_giusta": 12.25,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3-1",
-      "p": 0.0714,
-      "quota_giusta": 14.02,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3-0",
-      "p": 0.0704,
-      "quota_giusta": 14.21,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "0-0",
-      "p": 0.0503,
-      "quota_giusta": 19.88,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-2",
-      "p": 0.0501,
-      "quota_giusta": 19.94,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-2",
-      "p": 0.0464,
-      "quota_giusta": 21.57,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "4-1",
-      "p": 0.0386,
-      "quota_giusta": 25.91,
-      "quota_book": null,
-      "valore": null
-     }
-    ]
-   }
-  },
-  {
-   "data": "2026-10-12",
-   "ora": "20:45",
-   "casa": "Torino",
-   "trasf": "Udinese",
-   "valori_usati": true,
-   "gol_attesi": 2.47,
-   "mercati": {
-    "1X2": [
-     {
-      "esito": "1",
-      "p": 0.4095,
-      "quota_giusta": 2.44,
-      "quota_book": 2.3,
-      "valore": -0.058
-     },
-     {
-      "esito": "X",
-      "p": 0.3049,
-      "quota_giusta": 3.28,
-      "quota_book": 3.2,
-      "valore": -0.024
-     },
-     {
-      "esito": "2",
-      "p": 0.2856,
-      "quota_giusta": 3.5,
-      "quota_book": 3.3,
-      "valore": -0.057
-     }
-    ],
-    "Doppia chance": [
-     {
-      "esito": "1X",
-      "p": 0.7144,
-      "quota_giusta": 1.4,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X2",
-      "p": 0.5905,
-      "quota_giusta": 1.69,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "12",
-      "p": 0.6951,
-      "quota_giusta": 1.44,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Under/Over": [
-     {
-      "esito": "Under 0.5",
-      "p": 0.0964,
-      "quota_giusta": 10.37,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 0.5",
-      "p": 0.9036,
-      "quota_giusta": 1.11,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Under 1.5",
-      "p": 0.2811,
-      "quota_giusta": 3.56,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 1.5",
-      "p": 0.7189,
-      "quota_giusta": 1.39,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Under 2.5",
-      "p": 0.551,
-      "quota_giusta": 1.81,
-      "quota_book": 1.73,
-      "valore": -0.047
-     },
-     {
-      "esito": "Over 2.5",
-      "p": 0.449,
-      "quota_giusta": 2.23,
-      "quota_book": 2.1,
-      "valore": -0.057
-     },
-     {
-      "esito": "Under 3.5",
-      "p": 0.7636,
-      "quota_giusta": 1.31,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 3.5",
-      "p": 0.2364,
-      "quota_giusta": 4.23,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Under 4.5",
-      "p": 0.8949,
-      "quota_giusta": 1.12,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 4.5",
-      "p": 0.1051,
-      "quota_giusta": 9.51,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Goal/No Goal": [
-     {
-      "esito": "Goal",
-      "p": 0.5102,
-      "quota_giusta": 1.96,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "No Goal",
-      "p": 0.4898,
-      "quota_giusta": 2.04,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Multigol": [
-     {
-      "esito": "1-2",
-      "p": 0.4546,
-      "quota_giusta": 2.2,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-3",
-      "p": 0.6672,
-      "quota_giusta": 1.5,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-4",
-      "p": 0.7985,
-      "quota_giusta": 1.25,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-5",
-      "p": 0.8634,
-      "quota_giusta": 1.16,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-3",
-      "p": 0.4824,
-      "quota_giusta": 2.07,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-4",
-      "p": 0.6138,
-      "quota_giusta": 1.63,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-5",
-      "p": 0.6787,
-      "quota_giusta": 1.47,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3-4",
-      "p": 0.3439,
-      "quota_giusta": 2.91,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3-5",
-      "p": 0.4088,
-      "quota_giusta": 2.45,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "4-6",
-      "p": 0.223,
-      "quota_giusta": 4.48,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Somma gol": [
-     {
-      "esito": "0",
-      "p": 0.0964,
-      "quota_giusta": 10.37,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1",
-      "p": 0.1847,
-      "quota_giusta": 5.41,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.2699,
-      "quota_giusta": 3.7,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3",
-      "p": 0.2125,
-      "quota_giusta": 4.71,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "4",
-      "p": 0.1313,
-      "quota_giusta": 7.61,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "5",
-      "p": 0.0649,
-      "quota_giusta": 15.4,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "6+",
-      "p": 0.0402,
-      "quota_giusta": 24.89,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa -2": [
-     {
-      "esito": "1",
-      "p": 0.0739,
-      "quota_giusta": 13.54,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.1271,
-      "quota_giusta": 7.87,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.7991,
-      "quota_giusta": 1.25,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa -1": [
-     {
-      "esito": "1",
-      "p": 0.2009,
-      "quota_giusta": 4.98,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.2156,
-      "quota_giusta": 4.64,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.5835,
-      "quota_giusta": 1.71,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa +1": [
-     {
-      "esito": "1",
-      "p": 0.7095,
-      "quota_giusta": 1.41,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.1717,
-      "quota_giusta": 5.82,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.1188,
-      "quota_giusta": 8.42,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa +2": [
-     {
-      "esito": "1",
-      "p": 0.8812,
-      "quota_giusta": 1.13,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.0828,
-      "quota_giusta": 12.08,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.0361,
-      "quota_giusta": 27.73,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Risultato esatto": [
-     {
-      "esito": "1-1",
-      "p": 0.1395,
-      "quota_giusta": 7.17,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-0",
-      "p": 0.1035,
-      "quota_giusta": 9.66,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "0-0",
-      "p": 0.0964,
-      "quota_giusta": 10.37,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-1",
-      "p": 0.0872,
-      "quota_giusta": 11.47,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "0-1",
-      "p": 0.0812,
-      "quota_giusta": 12.31,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-0",
-      "p": 0.079,
-      "quota_giusta": 12.66,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-2",
-      "p": 0.0704,
-      "quota_giusta": 14.21,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "0-2",
-      "p": 0.0515,
-      "quota_giusta": 19.44,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-2",
-      "p": 0.0481,
-      "quota_giusta": 20.77,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3-1",
-      "p": 0.0398,
-      "quota_giusta": 25.15,
-      "quota_book": null,
-      "valore": null
-     }
-    ]
-   }
-  }
+ "note": [
+  "Nessuna partita in programma nei prossimi giorni (pausa o calendario non ancora pubblicato)."
  ],
+ "partite": [],
  "valore": [],
  "piano": {
   "attivo": false,
@@ -6965,9 +6104,119 @@
  },
  "storico": {
   "riepilogo": {
-   "partite": 0
+   "partite": 10,
+   "esito_azzeccato": 0.6,
+   "log_loss_modello": 0.882,
+   "log_loss_bookmaker": 0.8461,
+   "log_loss_modello_stesse": 0.882,
+   "over25_azzeccato": 0.5,
+   "giocate_valore": 3,
+   "giocate_vinte": 0,
+   "profitto_unita": -3.0,
+   "roi": -1.0
   },
-  "ultime": [],
+  "ultime": [
+   {
+    "data": "2026-10-12",
+    "casa": "Atalanta",
+    "trasf": "Venezia",
+    "risultato": "3-1",
+    "esito": "1",
+    "previsto": "1",
+    "p_esito": 0.615,
+    "pick": ""
+   },
+   {
+    "data": "2026-10-12",
+    "casa": "Torino",
+    "trasf": "Udinese",
+    "risultato": "2-1",
+    "esito": "1",
+    "previsto": "1",
+    "p_esito": 0.409,
+    "pick": ""
+   },
+   {
+    "data": "2026-10-11",
+    "casa": "Cagliari",
+    "trasf": "Juventus",
+    "risultato": "1-1",
+    "esito": "X",
+    "previsto": "2",
+    "p_esito": 0.201,
+    "pick": "1X2 2"
+   },
+   {
+    "data": "2026-10-11",
+    "casa": "Como",
+    "trasf": "Roma",
+    "risultato": "0-0",
+    "esito": "X",
+    "previsto": "2",
+    "p_esito": 0.283,
+    "pick": ""
+   },
+   {
+    "data": "2026-10-11",
+    "casa": "Lazio",
+    "trasf": "Monza",
+    "risultato": "3-1",
+    "esito": "1",
+    "previsto": "1",
+    "p_esito": 0.553,
+    "pick": "1X2 X"
+   },
+   {
+    "data": "2026-10-11",
+    "casa": "Lecce",
+    "trasf": "Bologna",
+    "risultato": "1-2",
+    "esito": "2",
+    "previsto": "2",
+    "p_esito": 0.544,
+    "pick": ""
+   },
+   {
+    "data": "2026-10-11",
+    "casa": "Sassuolo",
+    "trasf": "Milan",
+    "risultato": "1-1",
+    "esito": "X",
+    "previsto": "2",
+    "p_esito": 0.233,
+    "pick": ""
+   },
+   {
+    "data": "2026-10-10",
+    "casa": "Genoa",
+    "trasf": "Fiorentina",
+    "risultato": "2-1",
+    "esito": "1",
+    "previsto": "2",
+    "p_esito": 0.265,
+    "pick": ""
+   },
+   {
+    "data": "2026-10-10",
+    "casa": "Inter",
+    "trasf": "Parma",
+    "risultato": "3-0",
+    "esito": "1",
+    "previsto": "1",
+    "p_esito": 0.87,
+    "pick": ""
+   },
+   {
+    "data": "2026-10-10",
+    "casa": "Napoli",
+    "trasf": "Frosinone",
+    "risultato": "3-0",
+    "esito": "1",
+    "previsto": "1",
+    "p_esito": 0.638,
+    "pick": "1X2 X"
+   }
+  ],
   "giocate": {
    "riepilogo": {
     "giocate": 0
