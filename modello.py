@@ -46,6 +46,15 @@ T0 = time.time()
 
 def codice(anno):
     return f"{anno % 100:02d}{(anno + 1) % 100:02d}"
+def senza_nan(x):
+    """Il browser non legge NaN/Infinity nel JSON: li trasforma in null."""
+    if isinstance(x, dict):
+        return {k: senza_nan(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [senza_nan(v) for v in x]
+    if isinstance(x, (float, np.floating)) and not np.isfinite(x):
+        return None
+    return x
 COD_CORRENTE = codice(STAGIONE_CORRENTE)
 
 def tempo(msg):
@@ -505,7 +514,7 @@ except Exception:
     import subprocess, sys
     try:   # installazione leggera: senza le dipendenze pesanti che non servono
         subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--no-deps", "penaltyblog==1.13.1"], check=True)
-        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "tqdm", "pulp", "fsspec", "plotly"], check=True)
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "tqdm", "pulp", "fsspec", "plotly", "tabulate", "networkx", "lxml", "matplotlib", "orjson", "html5lib", "cssselect"], check=True)
         import penaltyblog as pb
         USA_PB = True
     except Exception as e:
@@ -980,6 +989,187 @@ def mercati(P):
 def num(x, nd=4):
     return None if x is None or (isinstance(x, float) and not np.isfinite(x)) or pd.isna(x) else round(float(x), nd)
 
+# ==== Analisi della partita: punti di forza e punti deboli di ogni squadra (dai dati, aggiornata ogni giorno)
+_gio = df[~df.futura & df.gol_c.notna()]
+STORIA = pd.concat([
+    pd.DataFrame({"lega": _gio.lega, "stagione": _gio.stagione, "data": _gio.data, "squadra": _gio.casa, "avv": _gio.trasf,
+                  "casa": True, "gf": _gio.gol_c, "gs": _gio.gol_t, "xf": _gio.xg_c, "xs": _gio.xg_t}),
+    pd.DataFrame({"lega": _gio.lega, "stagione": _gio.stagione, "data": _gio.data, "squadra": _gio.trasf, "avv": _gio.casa,
+                  "casa": False, "gf": _gio.gol_t, "gs": _gio.gol_c, "xf": _gio.xg_t, "xs": _gio.xg_c}),
+]).sort_values("data")
+STORIA["punti"] = np.select([STORIA.gf > STORIA.gs, STORIA.gf == STORIA.gs], [3, 1], 0)
+
+def _classifica(lega, stagione):
+    """Medie stagionali di tutte le squadre del campionato (per dire se un attacco è tra i migliori o i peggiori)."""
+    s_ = STORIA[(STORIA.lega == lega) & (STORIA.stagione == stagione)]
+    if s_.groupby("squadra").size().min() < 5 if len(s_) else True:   # inizio stagione: si usa anche la precedente
+        prec = sorted(STORIA[STORIA.lega == lega].stagione.unique())
+        if stagione in prec and prec.index(stagione) > 0:
+            s_ = STORIA[(STORIA.lega == lega) & STORIA.stagione.isin(prec[prec.index(stagione) - 1:prec.index(stagione) + 1])]
+    g = s_.groupby("squadra").agg(gf=("gf", "mean"), gs=("gs", "mean"), xf=("xf", "mean"), xs=("xs", "mean"), n=("gf", "size"))
+    return g
+_CACHE_CL = {}
+
+def _r(x, nd=1):
+    return None if x is None or pd.isna(x) else round(float(x), nd)
+def _v(x):
+    return "—" if x is None or pd.isna(x) else f"{float(x):.1f}".replace(".", ",")
+
+def scheda_squadra(sq, lega, stagione, in_casa):
+    h = STORIA[(STORIA["squadra"] == sq) & (STORIA.lega == lega)]
+    if len(h) < 3:
+        return None
+    u5, u10 = h.tail(5), h.tail(10)
+    stag = h[h["stagione"] == stagione]
+    luogo = stag[stag["casa"] == in_casa] if len(stag[stag["casa"] == in_casa]) >= 2 else h[h["casa"] == in_casa].tail(6)
+    key = (lega, stagione)
+    if key not in _CACHE_CL:
+        _CACHE_CL[key] = _classifica(lega, stagione)
+    cl = _CACHE_CL[key]
+    n_sq = len(cl)
+    pos = lambda col, asc: int(cl[col].rank(ascending=asc, method="min").get(sq, np.nan)) if sq in cl.index and pd.notna(cl.at[sq, col]) else None
+    att, dif = pos("gf", False), pos("gs", True)
+    xatt, xdif = pos("xf", False), pos("xs", True)
+    forma = "".join({3: "V", 1: "N", 0: "P"}[p] for p in u5["punti"])
+    sch = {
+        "forma": forma, "punti_5": int(u5["punti"].sum()),
+        "gf_5": _r(u5["gf"].mean()), "gs_5": _r(u5["gs"].mean()),
+        "xf_5": _r(u5["xf"].mean()), "xs_5": _r(u5["xs"].mean()),
+        "over_10": int(((u10["gf"] + u10["gs"]) > 2.5).sum()), "goal_10": int(((u10["gf"] > 0) & (u10["gs"] > 0)).sum()),
+        "porta_inviolata_10": int((u10["gs"] == 0).sum()), "a_secco_10": int((u10["gf"] == 0).sum()), "n_10": int(len(u10)),
+        "luogo": "in casa" if in_casa else "in trasferta",
+        "luogo_vnp": [int((luogo["punti"] == 3).sum()), int((luogo["punti"] == 1).sum()), int((luogo["punti"] == 0).sum())],
+        "luogo_gf": _r(luogo["gf"].mean()), "luogo_gs": _r(luogo["gs"].mean()),
+        "pos_attacco": att, "pos_difesa": dif, "squadre": n_sq,
+    }
+    forza, debole = [], []
+    alto, basso = max(3, round(n_sq * 0.25)), n_sq - max(3, round(n_sq * 0.25)) + 1
+    gfm = cl.at[sq, "gf"] if sq in cl.index else np.nan
+    gsm = cl.at[sq, "gs"] if sq in cl.index else np.nan
+    if att and att <= alto: forza.append(f"Attacco tra i migliori del campionato ({att}° su {n_sq}, {_v(_r(gfm))} gol a partita)")
+    if att and att >= basso: debole.append(f"Attacco tra i meno prolifici ({att}° su {n_sq}, {_v(_r(gfm))} gol a partita)")
+    if dif and dif <= alto: forza.append(f"Difesa tra le più solide ({dif}° su {n_sq}, {_v(_r(gsm))} gol subiti a partita)")
+    if dif and dif >= basso: debole.append(f"Difesa tra le più battute ({dif}° su {n_sq}, {_v(_r(gsm))} gol subiti a partita)")
+    pt = sch["punti_5"]
+    if pt >= 10: forza.append(f"In gran forma: {pt} punti nelle ultime 5 ({forma})")
+    elif pt <= 4: debole.append(f"Momento negativo: {pt} punti nelle ultime 5 ({forma})")
+    v_, n_, p_ = sch["luogo_vnp"]; ng = v_ + n_ + p_
+    if ng >= 3 and v_ / ng >= 0.6: forza.append(f"Forte {sch['luogo']}: {v_} vittorie su {ng} quest'anno")
+    if ng >= 3 and p_ / ng >= 0.5: debole.append(f"Fatica {sch['luogo']}: {p_} sconfitte su {ng} quest'anno")
+    if pd.notna(sch["xf_5"]) and pd.notna(sch["gf_5"]):
+        d_ = sch["gf_5"] - sch["xf_5"]
+        if d_ >= 0.5: debole.append(f"Segna più di quanto crea ({_v(sch['gf_5'])} gol contro {_v(sch['xf_5'])} xG nelle ultime 5): difficile che duri")
+        if d_ <= -0.5: forza.append(f"Crea più di quanto segna ({_v(sch['xf_5'])} xG contro {_v(sch['gf_5'])} gol nelle ultime 5): i gol possono arrivare")
+        if sch["xs_5"] is not None and sch["xs_5"] >= 1.8: debole.append(f"Concede tanto: {_v(sch['xs_5'])} xG a partita agli avversari nelle ultime 5")
+        if sch["xs_5"] is not None and sch["xs_5"] <= 0.9: forza.append(f"Concede pochissimo: {_v(sch['xs_5'])} xG agli avversari nelle ultime 5")
+    if sch["porta_inviolata_10"] >= 5: forza.append(f"Porta inviolata in {sch['porta_inviolata_10']} delle ultime {sch['n_10']}")
+    if sch["a_secco_10"] >= 4: debole.append(f"A secco in {sch['a_secco_10']} delle ultime {sch['n_10']}")
+    sch["forza"], sch["debole"] = forza[:4], debole[:4]
+    return sch
+
+def analizza(r, ms):
+    c = scheda_squadra(r.casa, r.lega, r.stagione, True)
+    t = scheda_squadra(r.trasf, r.lega, r.stagione, False)
+    if c is None or t is None:
+        return None
+    chiavi = []
+    if c["pos_attacco"] and t["pos_difesa"] and c["pos_attacco"] <= c["squadre"] / 3 and t["pos_difesa"] > c["squadre"] * 2 / 3:
+        chiavi.append(f"{r.casa}: uno degli attacchi migliori contro una delle difese più deboli, occhio ai gol di casa.")
+    if t["pos_attacco"] and c["pos_difesa"] and t["pos_attacco"] <= t["squadre"] / 3 and c["pos_difesa"] > t["squadre"] * 2 / 3:
+        chiavi.append(f"{r.trasf}: uno degli attacchi migliori contro una delle difese più deboli, il gol in trasferta è probabile.")
+    tot_goal = c["goal_10"] + t["goal_10"]; tot_over = c["over_10"] + t["over_10"]; nn = c["n_10"] + t["n_10"]
+    if tot_goal / nn >= 0.6: chiavi.append(f"Entrambe segnano spesso e subiscono spesso: Goal in {tot_goal} delle loro ultime {nn} partite.")
+    elif tot_goal / nn <= 0.35: chiavi.append(f"Partite bloccate: Goal solo in {tot_goal} delle loro ultime {nn} partite.")
+    if tot_over / nn >= 0.65: chiavi.append(f"Over 2.5 in {tot_over} delle loro ultime {nn} partite.")
+    elif tot_over / nn <= 0.35: chiavi.append(f"Under 2.5 in {nn - tot_over} delle loro ultime {nn} partite.")
+    dp = c["punti_5"] - t["punti_5"]
+    if abs(dp) >= 6:
+        chiavi.append(f"Momento molto diverso: {c['punti_5']} punti contro {t['punti_5']} nelle ultime 5.")
+    # il mercato che il modello ritiene più probabile fuori dall'1X2 "scontato"
+    altri = [(p, m_, e_) for (m_, e_), p in ms.items() if m_ in ("Under/Over", "Goal/No Goal") and e_ in ("Over 2.5", "Under 2.5", "Goal", "No Goal")]
+    p_, m_, e_ = max(altri)
+    chiavi.append(f"Per il modello l'esito sui gol più probabile è {e_} ({round(p_ * 100)}%).")
+    return {"casa": c, "trasf": t, "chiavi": chiavi[:4]}
+
+# ==== Spiegazione del pronostico: quanto pesa ogni fattore nella previsione del modello
+GRUPPI = [
+    ("Quote dei bookmaker", ["book_1v2", "book_X", "pin_1v2", "pin_X", "dis_1v2", "fase_x_book"]),
+    ("Valore delle rose", ["diff_valore"]),
+    ("Gioco creato e concesso (xG)", ["diff_xg", "xg_1v2", "xg_X"]),
+    ("Gol fatti e subiti (Poisson)", ["pois_1v2", "pois_X"]),
+    ("Forza storica (Elo)", ["elo_diff"]),
+    ("Pi-ratings", ["pi_diff"]),
+    ("Poisson bivariato", ["biv_1v2", "biv_X"]),
+    ("Modello bayesiano", ["bay_1v2", "bay_X"]),
+    ("Calendario e riposo", ["diff_riposo", "infrasett", "fase"]),
+]
+
+def _milioni(sq, pref, r):
+    v = globals().get("valori_ora", pd.Series(dtype=float)).get(sq, np.nan)
+    if pd.isna(v):
+        v = getattr(r, pref + "valore", np.nan)
+    return None if pd.isna(v) else round(float(v) / 1e6)
+
+def spiega(r, cols, mdl, x, pc):
+    try:
+        z = mdl[0].transform(x)[0]
+        lr = mdl[-1]
+        cl = list(lr.classes_)
+        d = lr.coef_[cl.index("1")] - lr.coef_[cl.index("2")]      # >0 spinge verso la squadra di casa
+        contr = dict(zip(cols, d * z))
+        fattori = []
+        for nome, gc in GRUPPI:
+            v = sum(contr[c] for c in gc if c in contr)
+            if any(c in contr for c in gc):
+                fattori.append({"fattore": nome, "peso": round(float(v), 3)})
+        tot = sum(abs(f["peso"]) for f in fattori) or 1
+        for f in fattori:
+            f["quota"] = round(abs(f["peso"]) / tot, 3)
+            f["verso"] = r.casa if f["peso"] > 0 else r.trasf
+        fattori.sort(key=lambda f: -abs(f["peso"]))
+        p1, pX, p2 = float(pc[cl.index("1")]), float(pc[cl.index("X")]), float(pc[cl.index("2")])
+        fav = r.casa if p1 > p2 else r.trasf
+        dati = {
+            "book": [num(r.p_book_1), num(r.p_book_X), num(r.p_book_2)] if pd.notna(r.p_book_1) else None,
+            "valore_casa": _milioni(r.casa, "c_", r), "valore_trasf": _milioni(r.trasf, "t_", r),
+            "diff_xg": num(getattr(r, "diff_xg", np.nan), 2),
+        }
+        # frase in italiano semplice
+        pro = [f for f in fattori if f["verso"] == fav and f["quota"] >= 0.08][:2]
+        contro = [f for f in fattori if f["verso"] != fav and f["quota"] >= 0.08][:1]
+        def descr(f):
+            n = f["fattore"]
+            if n == "Valore delle rose" and dati["valore_casa"] and dati["valore_trasf"]:
+                return f"la rosa che vale di più ({dati['valore_casa']} contro {dati['valore_trasf']} milioni)" if f["verso"] == r.casa and dati["valore_casa"] > dati["valore_trasf"] or f["verso"] == r.trasf and dati["valore_trasf"] > dati["valore_casa"] else "il valore delle rose"
+            if n == "Quote dei bookmaker" and dati["book"]:
+                pb = dati["book"][0] if f["verso"] == r.casa else dati["book"][2]
+                return f"le quote dei bookmaker ({round(pb * 100)}% di probabilità)"
+            if n.startswith("Gioco creato"):
+                return "il gioco creato e concesso nelle ultime partite (xG)"
+            return n.lower()
+        if abs(p1 - p2) < 0.06:
+            frase = f"Partita equilibrata: {r.casa} {round(p1*100)}%, pareggio {round(pX*100)}%, {r.trasf} {round(p2*100)}%. Nessun fattore sposta davvero l'ago."
+        else:
+            frase = f"Favorita per il modello: {fav} ({round(max(p1, p2)*100)}%)"
+            if pro:
+                frase += ", soprattutto per " + " e per ".join(descr(f) for f in pro)
+            frase += "."
+            if contro:
+                frase += f" A favore di {contro[0]['verso']} invece: {descr(contro[0])}."
+        if pX >= 0.31:
+            frase += f" Il pareggio è più probabile del solito ({round(pX*100)}%)."
+        return {"frase": frase, "fattori": fattori, "dati": dati}
+    except Exception as e:
+        print(f"Spiegazione {r.casa}-{r.trasf} non riuscita: {e}")
+        return None
+
+def analisi_sicura(r, ms):
+    try:
+        return analizza(r, ms)
+    except Exception as e:       # l'analisi è un di più: se qualcosa va storto la previsione esce lo stesso
+        print(f"Analisi {r.casa}-{r.trasf} non riuscita: {e}")
+        return None
+
 partite, righe_csv, righe_storico, piano, cand_fut = [], [], [], [], []
 for r in prepara(df[df.futura]).itertuples():
     scelto = None
@@ -1032,7 +1222,8 @@ for r in prepara(df[df.futura]).itertuples():
     ora = str(getattr(r, "ora", "") or "")
     ora = "" if ora.lower() in ("nan", "none") else ora
     partite.append({"data": str(r.data.date()), "ora": ora, "casa": r.casa, "trasf": r.trasf,
-                    "valori_usati": usa_val, "gol_attesi": round(gol_att, 2), "mercati": per_mercato})
+                    "valori_usati": usa_val, "gol_attesi": round(gol_att, 2), "mercati": per_mercato,
+                    "analisi": analisi_sicura(r, ms), "spiegazione": spiega(r, cols, mdl, x, pc)})
     candidati = [(v["valore"], m_, v) for m_, lst in per_mercato.items() for v in lst if v["valore"] is not None]
     miglior = max(candidati, key=lambda t: t[0]) if candidati else None
     ok_pick = bool(miglior and miglior[0] > 0.05)
@@ -1094,7 +1285,7 @@ if SIMULA_DAL:
                                  "errore_bookmaker": round(float(np.mean(ll_b)), 4) if ll_b else None}}
     os.makedirs("docs", exist_ok=True)
     with open("docs/simulazione.json", "w", encoding="utf-8") as f:
-        json.dump(simulazione, f, ensure_ascii=False, indent=1, default=str)
+        json.dump(senza_nan(simulazione), f, ensure_ascii=False, indent=1, default=str)
     print(json.dumps(simulazione["riepilogo"], indent=1)); print(json.dumps(giocate_sim, ensure_ascii=False, indent=1))
     tempo("Simulazione scritta in docs/simulazione.json")
     raise SystemExit(0)
@@ -1278,6 +1469,6 @@ dati = {
     "giocata": {"scelta": GIOCATA, "alternative": ALTERNATIVE_GG, "date": GIORNATA_DATE, "regola": descrivi(REGOLA_OGGI)},
 }
 with open("docs/dati.json", "w", encoding="utf-8") as f:
-    json.dump(dati, f, ensure_ascii=False, indent=1, default=str)
+    json.dump(senza_nan(dati), f, ensure_ascii=False, indent=1, default=str)
 pd.DataFrame(righe_csv).to_csv("docs/previsioni_giornata.csv", index=False)
 tempo("Scritto docs/dati.json e docs/previsioni_giornata.csv")

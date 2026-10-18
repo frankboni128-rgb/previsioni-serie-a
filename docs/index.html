@@ -3,11 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Previsioni Serie A</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+<title>xGOL · Previsioni Serie A</title>
+<link rel="icon" href="favicon.png">
+<link rel="apple-touch-icon" href="icona-180.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B1230"><text y='.9em' font-size='90'>⚽</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@700;800&family=Oswald:wght@400;500;600&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
   --carta:#EEF2EA; --carta2:#E3EADF; --inchiostro:#1B3A2E; --tenue:#5E7467;
@@ -129,12 +132,137 @@ footer a{color:var(--inchiostro)}
   .casella.scelta svg ellipse{stroke-dasharray:140;stroke-dashoffset:140;animation:cerchio .5s ease-out .15s forwards}
   @keyframes cerchio{to{stroke-dashoffset:0}}
 }
+
+/* ===== Tema xgol: blu del logo, lime per spezzare ===== */
+:root,:root[data-theme="dark"],:root[data-theme="light"]{
+  --carta:#0B1230; --carta2:#101C4A; --inchiostro:#FFFFFF; --tenue:#AFC0EE;
+  --griglia:rgba(255,255,255,.14); --segno:#7CFF1A; --segno-tenue:rgba(124,255,26,.12); --ok:#7CFF1A;
+  --lime:#7CFF1A; --blu:#2447C6; --ko:#FF5C7A;
+  --cond:"Oswald","Arial Narrow",system-ui,sans-serif;
+  --titolo:"Baloo 2","Arial Rounded MT Bold",system-ui,sans-serif;
+  --testo:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --carta:#0B1230; --carta2:#101C4A; --inchiostro:#FFFFFF; --tenue:#AFC0EE;
+  --griglia:rgba(255,255,255,.14); --segno:#7CFF1A; --segno-tenue:rgba(124,255,26,.12); --ok:#7CFF1A;}}
+html{background:#0B1230}
+body{position:relative;min-height:100vh;background:#0B1230}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:linear-gradient(180deg,rgba(11,18,48,.55) 0%,rgba(11,18,48,.3) 40%,rgba(11,18,48,.75) 100%),url("fondo.webp") center/cover no-repeat}
+.pagina{position:relative;z-index:1;max-width:760px}
+header{display:grid;grid-template-columns:auto 1fr auto;align-items:end;column-gap:18px;border-bottom:0;padding:18px 0 0;position:relative}
+html,body{overflow-x:hidden}
+header::before{content:"";position:absolute;z-index:-1;left:50%;width:100vw;transform:translateX(-50%);top:-40px;bottom:-34px;
+  background:linear-gradient(180deg,rgba(6,10,30,.97) 0%,rgba(6,10,30,.9) 72%,rgba(6,10,30,0) 100%)}
+.logo{margin:0;line-height:0;filter:drop-shadow(0 0 3px rgba(5,10,35,.9)) drop-shadow(0 0 14px rgba(5,10,35,.85))}
+.logo img{height:130px;width:auto;display:block}
+.sottotitolo{font:500 1rem var(--cond);letter-spacing:.22em;text-transform:uppercase;color:var(--inchiostro);margin:0 0 8px;text-shadow:0 2px 6px rgba(0,0,0,.5)}
+.agg{color:var(--tenue);font:400 .78rem var(--testo);text-align:right;margin-bottom:8px;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+header::after{content:"";grid-column:1/-1;display:block;height:20px;margin:14px -16px 0 -40px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 24' preserveAspectRatio='none'%3E%3Cpath fill='%23FFFFFF' d='M0 9 L40 6 L90 8 L130 4 L200 7 L260 3 L330 6 L400 4 L470 7 L540 5 L600 8 L596 14 L560 13 L520 17 L470 14 L430 19 L380 15 L320 18 L270 14 L210 17 L160 13 L110 18 L70 14 L30 17 L4 13 Z'/%3E%3Cpath fill='%23FFFFFF' opacity='.6' d='M20 18 L80 19 L60 21 Z M300 19 L380 20 L340 22 Z M480 18 L560 17 L520 21 Z'/%3E%3C/svg%3E") left center/100% 100% no-repeat;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));transform:rotate(-1.2deg)}
+nav{flex-direction:column;align-items:stretch;gap:2px;margin:18px 0 24px;padding:0;overflow:visible;max-width:420px}
+nav button{font:500 1.35rem/1 var(--cond);text-transform:uppercase;letter-spacing:.03em;color:var(--inchiostro);
+  background:none;border:0;padding:7px 12px 7px 34px;text-align:left;position:relative;transform:none;box-shadow:none;
+  text-shadow:0 2px 4px rgba(0,0,0,.7);transition:color .15s,padding .15s}
+nav button:hover{color:var(--lime);padding-left:40px}
+nav button[aria-selected="true"]{color:#0B1230;text-shadow:none;border-bottom:0;
+  background:linear-gradient(90deg,rgba(124,255,26,.2) 0,var(--lime) 14%,rgba(124,255,26,.85) 55%,rgba(124,255,26,0) 100%)}
+nav button[aria-selected="true"]::before{content:"";position:absolute;left:8px;top:50%;width:16px;height:16px;transform:translateY(-50%) rotate(45deg);
+  background:#0B1230;box-shadow:0 0 0 2px var(--lime) inset}
+button:focus-visible,summary:focus-visible,a:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+.note{border-left:5px solid var(--lime);background:rgba(9,15,42,.85);font-size:.9rem}
+.vuoto strong{font:600 1.5rem var(--cond);text-transform:uppercase;color:var(--lime)}
+.schedina,.giudizio,.cifre,figure.grafico,.budget,.scheda-gioco{border:1px solid rgba(255,255,255,.2);
+  background:rgba(9,15,42,.88);backdrop-filter:blur(4px);box-shadow:0 12px 30px rgba(0,0,0,.35);border-radius:4px}
+.giocata{border:0;padding:16px 18px 14px;background:linear-gradient(100deg,rgba(124,255,26,.2),rgba(9,15,42,.92) 55%);
+  box-shadow:0 12px 30px rgba(0,0,0,.4),inset 4px 0 0 var(--lime);position:relative;border-radius:4px}
+.giocata::after{content:"";position:absolute;left:-10px;right:30%;bottom:-8px;height:12px;opacity:.9;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 24' preserveAspectRatio='none'%3E%3Cpath fill='%237CFF1A' d='M0 9 L40 6 L90 8 L130 4 L200 7 L260 3 L330 6 L400 4 L470 7 L540 5 L600 8 L596 14 L560 13 L520 17 L470 14 L430 19 L380 15 L320 18 L270 14 L210 17 L160 13 L110 18 L70 14 L30 17 L4 13 Z'/%3E%3Cpath fill='%237CFF1A' opacity='.6' d='M20 18 L80 19 L60 21 Z M300 19 L380 20 L340 22 Z M480 18 L560 17 L520 21 Z'/%3E%3C/svg%3E") center/100% 100% no-repeat}
+.giocata .etichetta{font:500 .95rem var(--cond);letter-spacing:.14em;text-transform:uppercase;color:var(--lime);margin:0 0 2px}
+.giocata .scelta{font:800 2.3rem/1 var(--titolo);text-transform:lowercase;color:var(--inchiostro);margin:2px 0}
+.giocata .partita-g{font:500 1.1rem var(--cond);text-transform:uppercase;letter-spacing:.04em;color:var(--tenue)}
+.giocata .numeri b{font:600 1.5rem var(--cond);color:var(--lime)}
+.intestazione,.giorno,.scheda-gioco h3{background:rgba(36,71,198,.55);color:#DCE5FF;font:500 .9rem var(--cond);
+  text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid rgba(255,255,255,.15)}
+.intestazione{border-bottom:2px solid var(--lime)}
+.squadre{font:600 1.35rem/1.1 var(--cond);text-transform:uppercase;letter-spacing:.02em}
+details.partita{border-bottom:1px solid var(--griglia)}
+summary{transition:background .15s}
+summary:hover{background:linear-gradient(90deg,rgba(124,255,26,.1),transparent 70%)}
+details[open]>summary{background:linear-gradient(90deg,rgba(124,255,26,.16),transparent 80%)}
+.casella{font:500 1.2rem var(--cond)}
+.casella.scelta{color:#0B1230;background:var(--lime)}
+.casella svg{display:none}
+.dettaglio{background:rgba(6,10,30,.75);border-top:1px solid var(--griglia)}
+.filtri button{font:500 .85rem var(--cond);text-transform:uppercase;letter-spacing:.05em;color:var(--inchiostro);
+  background:rgba(36,71,198,.35);border:1px solid rgba(255,255,255,.22);transform:none;border-radius:3px}
+.filtri button[aria-pressed="true"]{background:var(--lime);color:#0B1230;border-color:var(--lime)}
+th{font:500 .8rem var(--cond);text-transform:uppercase;letter-spacing:.08em;color:var(--tenue);border-bottom:2px solid var(--lime)}
+td{border-bottom:1px solid var(--griglia)}
+tr:hover td{background:rgba(124,255,26,.05)}
+tr.valore td{background:rgba(124,255,26,.1)}
+.barra{background:var(--lime);opacity:.9}
+.pos{color:var(--lime)}
+h2{font:800 2rem/1 var(--titolo);text-transform:lowercase;color:var(--lime);margin:30px 0 10px;padding:0;border:0;text-shadow:0 2px 8px rgba(0,0,0,.5)}
+h3{font:500 1.1rem var(--cond);text-transform:uppercase;letter-spacing:.06em;color:#DCE5FF}
+.giudizio strong,.cifre b,.puntata b{font-family:var(--cond);font-weight:600;color:var(--lime)}
+.cifre div{border-color:var(--griglia)}
+.linea{stroke:var(--lime);stroke-width:2.5}
+.base{stroke:#FFFFFF}
+.esito-ok,.ok{color:var(--ok)}.esito-ko,.ko{color:var(--ko)}
+input.num{font:500 1.1rem var(--cond);background:rgba(6,10,30,.9);color:var(--lime);border:1px solid rgba(255,255,255,.3)}
+footer{border-top:1px solid var(--griglia);color:var(--tenue)}
+footer a{color:var(--lime)}
+@media (max-width:520px){
+  header{grid-template-columns:auto 1fr;row-gap:4px}
+  .logo img{height:96px}
+  .agg{grid-column:1/-1;text-align:left;margin:4px 0 0}
+  nav{flex-direction:row;overflow-x:auto;gap:0;max-width:none;margin:14px -16px 20px;padding:0 16px}
+  nav button{font-size:1.05rem;padding:8px 12px 8px 28px;white-space:nowrap}
+  nav button[aria-selected="true"]::before{left:7px;width:12px;height:12px}
+  nav button[aria-selected="true"]{background:var(--lime)}
+}
+/* perché questo pronostico */
+.perche{margin:10px 0 14px}
+.perche h3{margin:8px 0 6px;color:var(--lime)}
+.frase{margin:0 0 10px;font-size:.95rem;line-height:1.45}
+.fat,.fat-testa{display:grid;grid-template-columns:minmax(120px,1.1fr) 2fr minmax(90px,.9fr);gap:10px;align-items:center;font-size:.8rem;margin:4px 0}
+.fat-n{color:var(--inchiostro)}
+.fat-v{color:var(--tenue);text-align:right;white-space:nowrap}
+.fat-b{display:grid;grid-template-columns:1fr 1fr;height:10px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden;position:relative}
+.fat-b::after{content:"";position:absolute;left:50%;top:-2px;bottom:-2px;width:1px;background:rgba(255,255,255,.5)}
+.fat-b i{display:flex;height:100%}.fat-b .sx{justify-content:flex-end}
+.fat-b .sx b{background:var(--blu);height:100%;display:block;box-shadow:0 0 0 1px rgba(255,255,255,.25) inset}
+.fat-b .dx b{background:var(--lime);height:100%;display:block}
+.fat-ass{display:flex;justify-content:space-between;font-size:.7rem;color:var(--tenue);text-transform:uppercase;letter-spacing:.05em}
+.fat-ass em{font-style:normal}
+@media (max-width:520px){.fat,.fat-testa{grid-template-columns:1fr 1.3fr;}.fat-v{grid-column:1/-1;text-align:left;margin-top:-4px}}
+/* analisi partita */
+.analisi{margin:10px 0 6px}
+.analisi h3,.tit-mercati{margin:8px 0 8px;color:var(--lime)}
+.due-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.col-sq{border:1px solid rgba(255,255,255,.16);background:rgba(36,71,198,.22);padding:10px 10px 6px;border-radius:3px}
+.nome-sq{font:600 1.2rem var(--cond);text-transform:uppercase;letter-spacing:.03em;margin:0 0 6px;color:var(--inchiostro)}
+.forma{display:flex;gap:4px;margin-bottom:8px}
+.forma i{font:600 .78rem/22px var(--cond);font-style:normal;width:22px;text-align:center;color:#0B1230;border-radius:3px}
+.f-V{background:var(--lime)}.f-N{background:#C9D3F0}.f-P{background:var(--ko)}
+.mini{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;font-size:.75rem;color:var(--tenue)}
+.mini b{display:block;font:500 1.2rem/1.1 var(--cond);color:var(--inchiostro)}
+.sotto{font-size:.75rem;color:var(--tenue);margin:6px 0}
+.pf{font-size:.84rem;margin:5px 0;padding-left:20px;position:relative;line-height:1.35}
+.pf::before{position:absolute;left:0;top:0;font-weight:800}
+.pf-si::before{content:"+";color:var(--lime)}.pf-no::before{content:"–";color:var(--ko)}
+.chiavi{margin:10px 0 4px;border-left:4px solid var(--lime);background:rgba(124,255,26,.07);padding:8px 12px}
+.chiavi-t{font:500 .85rem var(--cond);letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin:0 0 4px}
+.chiavi ul{margin:0;padding-left:1.1em;font-size:.86rem}.chiavi li{margin:3px 0}
+@media (max-width:520px){.due-col{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="pagina">
   <header>
-    <h1>Previsioni<br>Serie A</h1>
+    <h1 class="logo"><img src="logo.webp" alt="xgol" width="212" height="300"></h1>
+    <p class="sottotitolo">Previsioni Serie A</p>
     <div class="agg" id="agg">Caricamento…</div>
   </header>
   <nav role="tablist">
@@ -211,7 +339,7 @@ function vistaGiornata(){
       ${["1","X","2"].map(k => `<div class="casella${k===max?" scelta":""}">${k===max?cerchio():""}${pct(pr[k])}</div>`).join("")}
     </summary><div class="dettaglio"></div></details>`;
   });
-  html += `</div><p class="avviso-val">Tocca una partita per vedere tutti i mercati. Il cerchio indica l'esito più probabile, non per forza la giocata migliore.</p>`;
+  html += `</div><p class="avviso-val">Tocca una partita per vedere tutti i mercati. Il riquadro verde indica l'esito più probabile, non per forza la giocata migliore.</p>`;
   return html;
 }
 
@@ -227,13 +355,63 @@ function tabellaMercato(p, merc){
     </tr>`).join("")}</tbody></table></div>`;
 }
 
+const virg = x => x == null ? "—" : String(x.toFixed ? x.toFixed(1) : x).replace(".", ",");
+function colonnaSquadra(nome, t){
+  const badge = (t.forma || "").split("").map(c => `<i class="f-${c}">${c}</i>`).join("");
+  const [v,n,pp] = t.luogo_vnp || [0,0,0];
+  return `<div class="col-sq">
+    <p class="nome-sq">${esc(nome)}</p>
+    <div class="forma" title="Ultime 5, dalla più vecchia alla più recente">${badge}</div>
+    <div class="mini">
+      <span><b>${virg(t.gf_5)}</b>gol fatti</span><span><b>${virg(t.gs_5)}</b>gol subiti</span>
+      ${t.xf_5 != null ? `<span><b>${virg(t.xf_5)}</b>xG creati</span><span><b>${virg(t.xs_5)}</b>xG concessi</span>` : ""}
+    </div>
+    <p class="sotto">Media ultime 5 · ${esc(t.luogo)} quest'anno: ${v}V ${n}N ${pp}P</p>
+    ${(t.forza||[]).map(x => `<p class="pf pf-si">${esc(x)}</p>`).join("")}
+    ${(t.debole||[]).map(x => `<p class="pf pf-no">${esc(x)}</p>`).join("")}
+    ${!(t.forza||[]).length && !(t.debole||[]).length ? `<p class="sotto">Nessun dato fuori dalla media.</p>` : ""}
+  </div>`;
+}
+function schedaPerche(p){
+  const s = p.spiegazione;
+  if (!s) return "";
+  const righe = (s.fattori || []).filter(f => f.quota >= 0.01).map(f => {
+    const w = Math.max(2, Math.round(f.quota * 100));
+    const casa = f.verso === p.casa;
+    return `<div class="fat"><span class="fat-n">${esc(f.fattore)}</span>
+      <span class="fat-b"><i class="sx">${casa ? "" : `<b style="width:${w}%"></b>`}</i><i class="dx">${casa ? `<b style="width:${w}%"></b>` : ""}</i></span>
+      <span class="fat-v">${esc(f.verso)} · ${Math.round(f.quota*100)}%</span></div>`;
+  }).join("");
+  const d = s.dati || {};
+  const extra = [];
+  if (d.book) extra.push(`Bookmaker: 1 <b>${pct(d.book[0])}</b> · X <b>${pct(d.book[1])}</b> · 2 <b>${pct(d.book[2])}</b>`);
+  if (d.valore_casa && d.valore_trasf) extra.push(`Valore rose: <b>${d.valore_casa}</b> contro <b>${d.valore_trasf}</b> milioni`);
+  return `<section class="perche">
+    <h3>Perché questo pronostico</h3>
+    <p class="frase">${esc(s.frase)}</p>
+    <div class="fat-testa"><span></span><span class="fat-ass"><em>← ${esc(p.trasf)}</em><em>${esc(p.casa)} →</em></span><span></span></div>
+    ${righe}
+    ${extra.length ? `<p class="sotto">${extra.join(" &nbsp;|&nbsp; ")}</p>` : ""}
+  </section>`;
+}
+function schedaAnalisi(p){
+  const a = p.analisi;
+  if (!a) return "";
+  return `<section class="analisi">
+    <h3>Analisi della partita</h3>
+    <div class="due-col">${colonnaSquadra(p.casa, a.casa)}${colonnaSquadra(p.trasf, a.trasf)}</div>
+    ${a.chiavi && a.chiavi.length ? `<div class="chiavi"><p class="chiavi-t">Chiavi della partita</p><ul>${a.chiavi.map(x => `<li>${esc(x)}</li>`).join("")}</ul></div>` : ""}
+    <p class="avviso-val">Infortuni, squalifiche e cambi di formazione non sono inclusi: controllali prima di giocare e, se manca un titolare importante, correggi la tua scelta.</p>
+  </section>`;
+}
+
 function apriDettaglio(det){
   const p = D.partite[+det.dataset.i], box = det.querySelector(".dettaglio");
   if (box.dataset.pronto) return;
   box.dataset.pronto = 1;
   const disponibili = MERCATI.filter(m => p.mercati[m]);
   const disegna = merc => {
-    box.innerHTML = `<div class="filtri">${disponibili.map(m =>
+    box.innerHTML = `${schedaPerche(p)}${schedaAnalisi(p)}<h3 class="tit-mercati">Tutte le giocate</h3><div class="filtri">${disponibili.map(m =>
       `<button type="button" aria-pressed="${m===merc}" data-m="${esc(m)}">${esc(m)}</button>`).join("")}</div>
       ${tabellaMercato(p, merc)}
       ${p.valori_usati ? "" : `<p class="avviso-val">Previsione senza valori di mercato delle rose: un po' meno precisa.</p>`}`;
@@ -551,5 +729,6 @@ fetch("dati.json?t=" + Date.now()).then(r => { if (!r.ok) throw new Error(r.stat
     Il primo aggiornamento non è ancora terminato. Su GitHub, nella scheda Actions, controlla che l'esecuzione sia completata.</div>`;
 });
 </script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});</script>
 </body>
 </html>
