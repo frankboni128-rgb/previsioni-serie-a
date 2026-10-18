@@ -104,6 +104,17 @@ for div in CAMPIONATI:
 giocate = pd.concat(blocchi, ignore_index=True)
 giocate["futura"] = False
 
+# Modalità simulazione: si torna al giorno prima di una giornata passata e la si prevede come se non fosse giocata
+SIMULA_DAL = os.environ.get("SIMULA_DAL", "").strip()
+if SIMULA_DAL:
+    _sa = giocate[(giocate.lega == PRINCIPALE) & (giocate.data >= pd.Timestamp(SIMULA_DAL))]
+    if _sa.empty:
+        raise SystemExit(f"Simulazione: nessuna partita di Serie A dal {SIMULA_DAL}")
+    PRIMO_SIM = _sa.data.min()
+    GIORNATA_SIM = _sa[_sa.data <= PRIMO_SIM + pd.Timedelta(days=3)].copy()
+    giocate = giocate[giocate.data < PRIMO_SIM].reset_index(drop=True)     # il modello non vede niente da lì in poi
+    tempo(f"SIMULAZIONE: giornata del {PRIMO_SIM.date()}, {len(GIORNATA_SIM)} partite")
+
 def inizio_italiano(data, ora):
     """Data e ora (ora inglese, come le pubblica football-data) -> orario italiano, senza fuso."""
     try:
@@ -118,7 +129,12 @@ def inizio_italiano(data, ora):
 # ==== Prossima giornata di Serie A
 oggi = pd.Timestamp.today().normalize()
 fut = pd.DataFrame()
+if SIMULA_DAL:
+    oggi = PRIMO_SIM
+    fut = GIORNATA_SIM.drop(columns=["gol_c", "gol_t", "futura"]).assign(ora="", inizio=None)
 try:
+    if SIMULA_DAL:
+        raise RuntimeError("simulazione")
     r = requests.get("https://www.football-data.co.uk/fixtures.csv", timeout=30)
     raw = leggi_csv(r.content)
     raw = raw[raw["Div"] == PRINCIPALE].reset_index(drop=True)
@@ -131,9 +147,10 @@ try:
     fut["inizio"] = [x.strftime("%Y-%m-%d %H:%M") if x is not None else None for x in _ini]
     fut["ora"] = [x.strftime("%H:%M") if x is not None else "" for x in _ini]
 except Exception as e:
-    print("Calendario automatico non disponibile:", e)
-    NOTE.append("Calendario della prossima giornata non disponibile su football-data.")
-if PARTITE_MANUALI:
+    if not SIMULA_DAL:
+        print("Calendario automatico non disponibile:", e)
+        NOTE.append("Calendario della prossima giornata non disponibile su football-data.")
+if PARTITE_MANUALI and not SIMULA_DAL:
     man = pd.DataFrame(PARTITE_MANUALI, columns=["data", "casa", "trasf"]).assign(
         lega=PRINCIPALE, stagione=COD_CORRENTE, data=lambda x: pd.to_datetime(x.data))
     fut = pd.concat([fut, man], ignore_index=True)
@@ -266,6 +283,7 @@ for L, (nome, lega_u, _) in CAMPIONATI.items():
 USA_XG = sum(len(p) for p in pezzi_xg) > 1000
 if USA_XG:
     df = df.merge(pd.concat(pezzi_xg, ignore_index=True), on=["lega", "stagione", "casa", "trasf"], how="left")
+    df.loc[df.futura, ["xg_c", "xg_t"]] = np.nan            # gli xG di una partita non giocata non si conoscono
 else:
     df["xg_c"] = df["xg_t"] = np.nan
     NOTE.append("Expected goals (Understat) non disponibili in questo aggiornamento: modello un po' meno preciso.")
@@ -478,6 +496,80 @@ for pref in ["pois"] + (["xg"] if USA_XG else []):
     df[f"{pref}_X"] = np.log(df[f"p_{pref}_X"])
 RHO_A = RHO.get((PRINCIPALE, "gol"), 0.05)
 
+# ==== Modelli della libreria penaltyblog: Pi-ratings, Poisson bivariato, modello bayesiano
+USA_PB = False
+try:
+    import penaltyblog as pb
+    USA_PB = True
+except Exception:
+    import subprocess, sys
+    try:   # installazione leggera: senza le dipendenze pesanti che non servono
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "--no-deps", "penaltyblog==1.13.1"], check=True)
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "tqdm", "pulp", "fsspec", "plotly"], check=True)
+        import penaltyblog as pb
+        USA_PB = True
+    except Exception as e:
+        print("penaltyblog non disponibile:", e)
+
+INIZIO_PB = codice(PRIMA_XG)
+for c in ["pi_diff", "biv_1v2", "biv_X", "bay_1v2", "bay_X"]:
+    df[c] = np.nan
+
+def stima_pb(model_cls, leghe, periodo, fit_kw):
+    """Per ogni periodo allena il modello sui 2 anni precedenti (partite recenti pesano di più) e prevede le partite del periodo."""
+    out = np.full((len(df), 3), np.nan)
+    for L in leghe:
+        sub = df[(df.lega == L) & (df.stagione >= INIZIO_PB)]
+        chiave = np.where(sub.futura, "futuro", sub.data.dt.to_period(periodo).astype(str))
+        for k, idx in sub.groupby(chiave).groups.items():
+            inizio = oggi if k == "futuro" else sub.data[idx].min()
+            p = df[(df.lega == L) & ~df.futura & (df.data < inizio) & (df.data >= inizio - pd.Timedelta(days=FINESTRA_GG))]
+            if len(p) < 300:
+                continue
+            w = np.exp(-XI * (inizio - p.data).dt.days.values)
+            try:
+                m = model_cls(p.gol_c.astype(int).values, p.gol_t.astype(int).values,
+                              p.casa.astype(str).values, p.trasf.astype(str).values, weights=w)
+                m.fit(**fit_kw)
+                tr = getattr(m, "trace", None)
+                if tr is not None and len(tr) > 1000:   # bayesiano: 1000 campioni bastano e la previsione diventa 80 volte più veloce
+                    m.trace = np.ascontiguousarray(tr[::len(tr) // 1000])
+            except Exception as e:
+                print(f"{model_cls.__name__} {L} {k}: {e}")
+                continue
+            for i in idx:
+                try:
+                    g = m.predict(str(df.at[i, "casa"]), str(df.at[i, "trasf"]))
+                    out[df.index.get_loc(i)] = [g.home_win, g.draw, g.away_win]
+                except Exception:
+                    pass        # squadra senza storico (neopromossa): si usa il nostro Poisson
+    return out
+
+if USA_PB:
+    # Pi-ratings: forza di ogni squadra in casa e fuori, aggiornata partita per partita
+    for L in CAMPIONATI:
+        sub = df[df.lega == L].sort_values(["data", "match_id"])
+        pir, vals = pb.ratings.PiRatingSystem(), []
+        for r in sub.itertuples():
+            vals.append(pir.expected_goal_difference(r.casa, r.trasf))
+            if not r.futura and pd.notna(r.gol_c):
+                pir.update_ratings(r.casa, r.trasf, int(r.gol_c - r.gol_t))
+        df.loc[sub.index, "pi_diff"] = vals
+    tempo("Pi-ratings calcolati")
+    for pref, cls, leghe, periodo, kw in [
+        ("biv", pb.models.BivariatePoissonGoalModel, list(CAMPIONATI), "W", {}),
+        ("bay", pb.models.BayesianGoalModel, [PRINCIPALE], "M", {"n_samples": 400, "burn": 200, "n_chains": 2}),
+    ]:
+        pr_ = stima_pb(cls, leghe, periodo, kw)
+        df[f"{pref}_1v2"] = np.log(pr_[:, 0] / pr_[:, 2])
+        df[f"{pref}_X"] = np.log(pr_[:, 1])
+        tempo(f"Modello {cls.__name__}: {int(np.isfinite(pr_[:, 0]).sum())} partite")
+# dove un modello non ha una previsione si usa quella del nostro Poisson
+for pref in ["biv", "bay"]:
+    df[f"{pref}_1v2"] = df[f"{pref}_1v2"].replace([np.inf, -np.inf], np.nan).fillna(df.pois_1v2)
+    df[f"{pref}_X"] = df[f"{pref}_X"].replace([np.inf, -np.inf], np.nan).fillna(df.pois_X)
+df["pi_diff"] = df["pi_diff"].fillna(0.0)
+
 # ==== Esperimenti: cosa migliora davvero il modello? (test su 7 stagioni)
 BASE = ["elo_diff", "pois_1v2", "pois_X"] + (["xg_1v2", "xg_X", "diff_xg"] if USA_XG else [])
 BOOK = ["book_1v2", "book_X"]
@@ -499,6 +591,14 @@ VERSIONI = {
 }
 if USA_XI:
     VERSIONI["+ formazioni ufficiali"] = (FEAT_A + PIN + ["diff_xi"], TUTTE, False)
+SEMPLICE = BOOK + PIN + ["diff_valore"] + (["diff_xg"] if USA_XG else [])
+if USA_PB:
+    VERSIONI.update({
+        "Semplice + Pi-ratings": (SEMPLICE + ["pi_diff"], TUTTE, True),
+        "Semplice + Poisson bivariato": (SEMPLICE + ["biv_1v2", "biv_X"], TUTTE, True),
+        "Semplice (solo Serie A)": (SEMPLICE, [PRINCIPALE], True),
+        "Semplice + modello bayesiano (solo Serie A)": (SEMPLICE + ["bay_1v2", "bay_X"], [PRINCIPALE], True),
+    })
 
 def pesi(train, anno_rif):
     if train is None:
@@ -842,7 +942,7 @@ tempo("Regola usata per la giocata della giornata: " + descrivi(REGOLA_OGGI))
 
 # ==== Previsioni per la prossima giornata di Serie A
 fin = prepara(df[df.esito.notna() & (df.stagione >= prima_train) & df.lega.isin(LEGHE_SCELTA)])
-ALTERNATIVE = [COLS_SCELTA, [c for c in COLS_SCELTA if c not in PIN + CAL], FEAT_A, BASE + ["diff_valore"], BASE + BOOK, BASE]
+ALTERNATIVE = [COLS_SCELTA, [c for c in COLS_SCELTA if c not in PIN + CAL + ["pi_diff", "biv_1v2", "biv_X", "bay_1v2", "bay_X"]], FEAT_A, BASE + ["diff_valore"], BASE + BOOK, BASE]
 MODELLI_FIN = []
 for cols in ALTERNATIVE:
     cols = [c for c in cols if c != "diff_xi"]
@@ -947,6 +1047,57 @@ tot_piano = sum(g_["percentuale"] for g_ in piano)
 for g_ in piano:
     g_["percentuale"] = round(g_["percentuale"] * min(1.0, MAX_GIORNO / tot_piano), 4) if tot_piano else 0
 tempo(f"Previsioni calcolate: {len(partite)}")
+
+# ==== Simulazione: confronto con i risultati veri e fine
+if SIMULA_DAL:
+    def _esito(a, b):
+        return "1" if a > b else "X" if a == b else "2"
+    def _vinta(es, a, b):
+        return {"1": a > b, "X": a == b, "2": a < b, "Over 2.5": a + b > 2.5, "Under 2.5": a + b < 2.5}[es]
+    ris = {(x.casa, x.trasf): (int(x.gol_c), int(x.gol_t)) for x in GIORNATA_SIM.itertuples()}
+    righe, ll_m, ll_b = [], [], []
+    for p in partite:
+        a, b = ris[(p["casa"], p["trasf"])]
+        pr = {v["esito"]: v["p"] for v in p["mercati"]["1X2"]}
+        qb = {v["esito"]: v["quota_book"] for v in p["mercati"]["1X2"]}
+        es, prev = _esito(a, b), max(pr, key=pr.get)
+        po = next(v["p"] for v in p["mercati"]["Under/Over"] if v["esito"] == "Over 2.5")
+        pg = next(v["p"] for v in p["mercati"]["Goal/No Goal"] if v["esito"] == "Goal")
+        top = p["mercati"]["Risultato esatto"][0]["esito"]
+        ll_m.append(-np.log(max(pr[es], 1e-9)))
+        if all(qb.values()):
+            inv = {k: 1 / v for k, v in qb.items()}
+            ll_b.append(-np.log(inv[es] / sum(inv.values())))
+        righe.append({"partita": f'{p["casa"]} - {p["trasf"]}', "data": p["data"], "risultato": f"{a}-{b}", "esito": es,
+                      "p1": pr["1"], "pX": pr["X"], "p2": pr["2"], "previsto": prev, "ok": prev == es,
+                      "p_over": po, "over_ok": (po > 0.5) == (a + b > 2.5), "p_goal": pg, "goal_ok": (pg > 0.5) == (a > 0 and b > 0),
+                      "ris_top": top, "ris_ok": top == f"{a}-{b}"})
+    cfs = pd.DataFrame(cand_fut)
+    cfs["quota"] = pd.to_numeric(cfs.quota, errors="coerce")
+    cfs = cfs.dropna(subset=["quota"])
+    cfs["giornata"] = "sim"
+    giocate_sim = []
+    for nome_r, reg in [("Regola attuale", REGOLA_OGGI), ("Esito più probabile con quota almeno 1,35", REGOLA_BASE)]:
+        sel = applica(cfs, reg, 1)
+        for x in sel.itertuples():
+            a, b = ris[(x.casa, x.trasf)]
+            v = bool(_vinta(x.esito, a, b))
+            giocate_sim.append({"regola": nome_r, "descrizione": descrivi(reg), "partita": x.partita, "esito": x.esito,
+                                "quota": round(float(x.quota), 2), "p": round(float(x.p), 4), "risultato": f"{a}-{b}",
+                                "vinta": v, "unita": round(float(x.quota) - 1, 2) if v else -1.0})
+    n = len(righe)
+    simulazione = {"dal": SIMULA_DAL, "eseguita": pd.Timestamp.now(tz="Europe/Rome").strftime("%Y-%m-%d %H:%M"),
+                   "versione": SCELTA, "partite": righe, "giocate": giocate_sim,
+                   "riepilogo": {"partite": n, "esiti_ok": sum(r["ok"] for r in righe), "over_ok": sum(r["over_ok"] for r in righe),
+                                 "goal_ok": sum(r["goal_ok"] for r in righe), "ris_ok": sum(r["ris_ok"] for r in righe),
+                                 "errore_modello": round(float(np.mean(ll_m)), 4) if ll_m else None,
+                                 "errore_bookmaker": round(float(np.mean(ll_b)), 4) if ll_b else None}}
+    os.makedirs("docs", exist_ok=True)
+    with open("docs/simulazione.json", "w", encoding="utf-8") as f:
+        json.dump(simulazione, f, ensure_ascii=False, indent=1, default=str)
+    print(json.dumps(simulazione["riepilogo"], indent=1)); print(json.dumps(giocate_sim, ensure_ascii=False, indent=1))
+    tempo("Simulazione scritta in docs/simulazione.json")
+    raise SystemExit(0)
 
 # Giocata della giornata in corso: una volta pubblicata non cambia più
 os.makedirs("docs", exist_ok=True)

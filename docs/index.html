@@ -155,7 +155,8 @@ const MERCATI = ["1X2","Doppia chance","Under/Over","Goal/No Goal","Multigol","S
   "Handicap casa -2","Handicap casa -1","Handicap casa +1","Handicap casa +2","Risultato esatto"];
 const GIORNI = ["domenica","lunedì","martedì","mercoledì","giovedì","venerdì","sabato"];
 const MESI = ["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
-let D = null, vistaCorrente = "giornata";
+let D = null, SIM = null, vistaCorrente = "giornata";
+fetch("simulazione.json?t=" + Date.now()).then(r => r.ok ? r.json() : null).then(j => { SIM = j; if (vistaCorrente === "storico" && D) mostra("storico"); }).catch(() => {});
 
 const pct = p => p == null ? "—" : Math.round(p * 100) + "%";
 const n1 = x => (x > 0 ? "+" : "") + String(x).replace(".", ",");
@@ -474,6 +475,28 @@ function vistaFiducia(){
     <p class="avviso-val">Con poche giocate i risultati dipendono molto dalla fortuna. Il margine del bookmaker, circa il 5%, gioca sempre contro.</p>`;
 }
 
+function sezioneSimulazione(){
+  if (!SIM || !SIM.partite) return "";
+  const r = SIM.riepilogo, ok = b => `<td class="${b ? "esito-ok" : "esito-ko"}">${b ? "sì" : "no"}</td>`;
+  return `<h2>Simulazione di una giornata passata</h2>
+    <p class="lead">Il modello attuale (${esc(SIM.versione)}) ha previsto la giornata del ${dataLunga(SIM.partite[0].data)} usando solo i dati disponibili prima, come se non fosse ancora stata giocata.</p>
+    <div class="cifre">
+      <div><b>${r.esiti_ok}/${r.partite}</b><span>esito 1-X-2 più probabile azzeccato</span></div>
+      <div><b>${r.over_ok}/${r.partite}</b><span>Under/Over 2.5 azzeccato</span></div>
+      <div><b>${r.goal_ok}/${r.partite}</b><span>Goal/No Goal azzeccato</span></div>
+      <div><b>${r.ris_ok}/${r.partite}</b><span>risultato esatto più probabile</span></div>
+    </div>
+    ${r.errore_modello != null && r.errore_bookmaker != null ? `<p class="lead">Errore medio 1-X-2 in questa giornata: modello ${n4b(r.errore_modello)}, bookmaker ${n4b(r.errore_bookmaker)} (più basso è meglio).</p>` : ""}
+    ${(SIM.giocate || []).map(g => `<div class="giudizio"><strong>${esc(g.regola)}: ${esc(g.partita)}, ${esc(NOME_ESITO[g.esito] || g.esito)} a ${q(g.quota)}</strong>
+      Risultato ${esc(g.risultato)}: <span class="${g.vinta ? "esito-ok" : "esito-ko"}">${g.vinta ? "vinta" : "persa"}</span> (${n1(g.unita)} unità). Regola: ${esc(g.descrizione)}.</div>`).join("")}
+    <div class="scroll"><table><thead><tr><th>Partita</th><th>Ris.</th><th>1</th><th>X</th><th>2</th><th>Previsto</th><th>Over 2.5</th><th>Goal</th></tr></thead><tbody>
+    ${SIM.partite.map(p => `<tr><td>${esc(p.partita)}</td><td>${esc(p.risultato)}</td><td>${pct(p.p1)}</td><td>${pct(p.pX)}</td><td>${pct(p.p2)}</td>
+      <td class="${p.ok ? "esito-ok" : "esito-ko"}">${esc(p.previsto)}</td>
+      <td class="${p.over_ok ? "esito-ok" : "esito-ko"}">${pct(p.p_over)}</td><td class="${p.goal_ok ? "esito-ok" : "esito-ko"}">${pct(p.p_goal)}</td></tr>`).join("")}
+    </tbody></table></div>
+    <p class="avviso-val">In verde le previsioni azzeccate. Simulazione eseguita il ${esc(SIM.eseguita)}.</p>`;
+}
+
 function sezioneStoricoGiocate(){
   const G = (D.storico.giocate || {}), r = G.riepilogo || {}, el = G.elenco || [];
   if (!r.giocate) return `<h2>Le giocate della giornata</h2><div class="vuoto"><strong>Nessuna giocata ancora conclusa</strong>Qui compare il bilancio delle giocate della giornata, partita dopo partita.</div>`;
@@ -488,7 +511,7 @@ function sezioneStoricoGiocate(){
 
 function vistaStorico(){
   const r = D.storico.riepilogo || {}, u = D.storico.ultime || [];
-  const testa = sezioneStoricoGiocate();
+  const testa = sezioneSimulazione() + sezioneStoricoGiocate();
   if (!r.partite) return testa + `<h2>Tutte le previsioni</h2><div class="vuoto"><strong>Ancora nessuna partita valutata</strong>
     Dopo la prima giornata giocata con il modello attivo, qui trovi come sono andate le previsioni.</div>`;
   return testa + `<h2>Come sono andate le previsioni</h2>
