@@ -18,12 +18,15 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
-      - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.7"
       - name: Costruisci l'APK
-        run: gradle -p xgol_app_android/android assembleRelease --no-daemon --stacktrace
+        shell: bash
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"; ls "$ANDROID_HOME/platforms" || true
+          gradle -p xgol_app_android/android assembleRelease --no-daemon --stacktrace 2>&1 | tee build.log
+          exit ${PIPESTATUS[0]}
       - name: Metti l'APK nella pagina
         run: cp xgol_app_android/android/app/build/outputs/apk/release/app-release.apk docs/xgol.apk
       - uses: actions/upload-artifact@v4
@@ -39,3 +42,11 @@ jobs:
           git commit -m "Nuova versione app Android"
           for i in 1 2 3 4 5; do git pull --rebase && git push && exit 0; sleep 15; done
           exit 1
+      - name: Salva il messaggio d'errore
+        if: failure()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898315+github-actions[bot]@users.noreply.github.com"
+          tail -n 150 build.log > xgol_app_android/ultimo_errore.txt || echo "nessun log" > xgol_app_android/ultimo_errore.txt
+          git add xgol_app_android/ultimo_errore.txt
+          git commit -m "Errore costruzione app" && for i in 1 2 3; do git pull --rebase && git push && break; sleep 10; done
