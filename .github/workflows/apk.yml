@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   apk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
@@ -18,11 +18,12 @@ jobs:
         with:
           distribution: temurin
           java-version: "17"
+      - uses: android-actions/setup-android@v3
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.7"
       - name: Costruisci l'APK
-        run: gradle -p xgol_app_android/android assembleRelease --no-daemon
+        run: gradle -p xgol_app_android/android assembleRelease --no-daemon --stacktrace
       - name: Metti l'APK nella pagina
         run: cp xgol_app_android/android/app/build/outputs/apk/release/app-release.apk docs/xgol.apk
       - uses: actions/upload-artifact@v4

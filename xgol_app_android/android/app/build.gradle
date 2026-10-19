@@ -8,8 +8,8 @@ android {
         minSdk 24
         targetSdk 34
         // il numero di versione cresce da solo a ogni costruzione su GitHub
-        versionCode (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
-        versionName "1." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0")
+        versionCode Integer.parseInt(System.getenv("GITHUB_RUN_NUMBER") ?: "1")
+        versionName("1." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0"))
     }
     signingConfigs {
         release {
