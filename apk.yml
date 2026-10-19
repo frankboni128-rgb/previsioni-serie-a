@@ -1,0 +1,40 @@
+name: Crea app Android
+
+on:
+  workflow_dispatch:
+  push:
+    paths: ["android/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+      - name: Costruisci l'APK
+        run: gradle -p android assembleRelease --no-daemon
+      - name: Metti l'APK nella pagina
+        run: cp android/app/build/outputs/apk/release/app-release.apk docs/xgol.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xgol-apk
+          path: docs/xgol.apk
+      - name: Salva l'APK sul sito
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898315+github-actions[bot]@users.noreply.github.com"
+          git add docs/xgol.apk
+          git diff --staged --quiet && exit 0
+          git commit -m "Nuova versione app Android"
+          for i in 1 2 3 4 5; do git pull --rebase && git push && exit 0; sleep 15; done
+          exit 1
