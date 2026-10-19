@@ -1,0 +1,32 @@
+plugins { id "com.android.application" }
+
+android {
+    namespace "it.xgol.app"
+    compileSdk 34
+    defaultConfig {
+        applicationId "it.xgol.app"
+        minSdk 24
+        targetSdk 34
+        // il numero di versione cresce da solo a ogni costruzione su GitHub
+        versionCode (System.getenv("GITHUB_RUN_NUMBER") ?: "1").toInteger()
+        versionName "1." + (System.getenv("GITHUB_RUN_NUMBER") ?: "0")
+    }
+    signingConfigs {
+        release {
+            storeFile file("xgol.keystore")
+            storePassword "xgol-app"
+            keyAlias "xgol"
+            keyPassword "xgol-app"
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
