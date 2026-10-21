@@ -1,5 +1,5 @@
 {
- "aggiornato": "2026-10-20 12:22",
+ "aggiornato": "2026-10-21 12:36",
  "stagione": "2026/27",
  "note": [
   "Nessuna partita in programma nei prossimi giorni (pausa o calendario non ancora pubblicato)."
@@ -207,13 +207,13 @@
    {
     "versione": "Semplice + modello bayesiano (solo Serie A)",
     "variabili": 9,
-    "errore_serie_a": 0.9788,
+    "errore_serie_a": 0.9786,
     "errore_chiusura_serie_a": 0.9741,
-    "errore_modello_su_chiusura_serie_a": 0.9788,
-    "clv_serie_a": -0.0351,
-    "resa_serie_a": 0.0703,
-    "giocate_serie_a": 1122,
-    "kelly_serie_a": 140.75
+    "errore_modello_su_chiusura_serie_a": 0.9786,
+    "clv_serie_a": -0.0353,
+    "resa_serie_a": 0.0819,
+    "giocate_serie_a": 1102,
+    "kelly_serie_a": 135.28
    }
   ],
   "copertura_formazioni": {
