@@ -159,6 +159,44 @@ except Exception as e:
     if not SIMULA_DAL:
         print("Calendario automatico non disponibile:", e)
         NOTE.append("Calendario della prossima giornata non disponibile su football-data.")
+# Calendario completo della stagione (fixturedownload.com): così la giornata successiva compare subito,
+# anche prima che football-data pubblichi le quote. Le partite già presenti con le quote restano quelle.
+NOMI_CAL = {"Internazionale": "Inter", "Hellas Verona": "Verona", "AC Milan": "Milan", "AS Roma": "Roma",
+            "SSC Napoli": "Napoli", "Juventus FC": "Juventus", "Parma Calcio": "Parma"}
+def nome_squadra(n, note):
+    n = NOMI_CAL.get(str(n).strip(), str(n).strip())
+    note_ = set(df_nomi)
+    if n in note_:
+        return n
+    import difflib
+    simile = difflib.get_close_matches(n, list(note_), n=1, cutoff=0.6)
+    return simile[0] if simile else n
+if not SIMULA_DAL:
+    try:
+        anno_cal = int("20" + COD_CORRENTE[:2])
+        rc = requests.get(f"https://fixturedownload.com/feed/json/serie-a-{anno_cal}", timeout=30)
+        cal = pd.DataFrame(rc.json())
+        cal["quando"] = pd.to_datetime(cal["DateUtc"].str.replace("Z", "", regex=False), utc=True).dt.tz_convert("Europe/Rome").dt.tz_localize(None)
+        da_giocare = cal[cal["HomeTeamScore"].isna() & (cal.quando >= oggi)]
+        if len(da_giocare):
+            prossima = int(da_giocare.RoundNumber.min())
+            g_ = da_giocare[da_giocare.RoundNumber == prossima]
+            df_nomi = set(giocate.loc[(giocate.lega == PRINCIPALE) & (giocate.stagione == COD_CORRENTE), "casa"]) | \
+                      set(giocate.loc[(giocate.lega == PRINCIPALE) & (giocate.stagione == COD_CORRENTE), "trasf"])
+            extra = pd.DataFrame({"lega": PRINCIPALE, "stagione": COD_CORRENTE,
+                                  "data": g_.quando.dt.normalize().values,
+                                  "ora": g_.quando.dt.strftime("%H:%M").values,
+                                  "inizio": g_.quando.dt.strftime("%Y-%m-%d %H:%M").values,
+                                  "casa": [nome_squadra(x, None) for x in g_.HomeTeam],
+                                  "trasf": [nome_squadra(x, None) for x in g_.AwayTeam]})
+            sconosciute = sorted((set(extra.casa) | set(extra.trasf)) - df_nomi)
+            if sconosciute:
+                print("Calendario: nomi non riconosciuti", sconosciute)
+                extra = extra[~extra.casa.isin(sconosciute) & ~extra.trasf.isin(sconosciute)]
+            fut = pd.concat([fut, extra], ignore_index=True)
+            print(f"Calendario completo: giornata {prossima}, {len(extra)} partite")
+    except Exception as e:
+        print("Calendario completo non disponibile:", e)
 if PARTITE_MANUALI and not SIMULA_DAL:
     man = pd.DataFrame(PARTITE_MANUALI, columns=["data", "casa", "trasf"]).assign(
         lega=PRINCIPALE, stagione=COD_CORRENTE, data=lambda x: pd.to_datetime(x.data))
