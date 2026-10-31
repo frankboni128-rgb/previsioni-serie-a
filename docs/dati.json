@@ -1,5 +1,5 @@
 {
- "aggiornato": "2026-10-30 12:55",
+ "aggiornato": "2026-10-31 12:18",
  "stagione": "2026/27",
  "note": [],
  "partite": [
@@ -5545,13 +5545,13 @@
    {
     "versione": "Semplice + modello bayesiano (solo Serie A)",
     "variabili": 9,
-    "errore_serie_a": 0.9785,
+    "errore_serie_a": 0.9786,
     "errore_chiusura_serie_a": 0.9741,
-    "errore_modello_su_chiusura_serie_a": 0.9785,
-    "clv_serie_a": -0.0348,
-    "resa_serie_a": 0.068,
-    "giocate_serie_a": 1096,
-    "kelly_serie_a": 135.1
+    "errore_modello_su_chiusura_serie_a": 0.9786,
+    "clv_serie_a": -0.0341,
+    "resa_serie_a": 0.0601,
+    "giocate_serie_a": 1111,
+    "kelly_serie_a": 131.35
    }
   ],
   "copertura_formazioni": {
@@ -11952,51 +11952,20 @@
    "stagione": "2627",
    "data": "2026-11-01",
    "ora": "18:00",
-   "inizio": "2026-11-01 18:00",
    "partita": "Lecce - Genoa",
    "casa": "Lecce",
    "trasf": "Genoa",
    "mercato": "1X2",
-   "esito": "2",
+   "esito": 2,
    "p": 0.419,
    "quota": 2.35,
    "quota_giusta": 2.39,
    "pubblicata": "2026-10-30 12:55",
    "regola": "quota almeno 1,70, mercati 1X2, valore almeno -3%",
-   "congelata": false
+   "inizio": "2026-11-01 18:00",
+   "congelata": true
   },
-  "alternative": [
-   {
-    "giornata": "2026-44W",
-    "stagione": "2627",
-    "data": "2026-11-02",
-    "ora": "18:30",
-    "inizio": "2026-11-02 18:30",
-    "partita": "Sassuolo - Fiorentina",
-    "casa": "Sassuolo",
-    "trasf": "Fiorentina",
-    "mercato": "1X2",
-    "esito": "X",
-    "p": 0.2871,
-    "quota": 3.6,
-    "quota_giusta": 3.48
-   },
-   {
-    "giornata": "2026-44W",
-    "stagione": "2627",
-    "data": "2026-11-01",
-    "ora": "15:00",
-    "inizio": "2026-11-01 15:00",
-    "partita": "Frosinone - Torino",
-    "casa": "Frosinone",
-    "trasf": "Torino",
-    "mercato": "1X2",
-    "esito": "X",
-    "p": 0.2845,
-    "quota": 3.8,
-    "quota_giusta": 3.51
-   }
-  ],
+  "alternative": [],
   "date": [
    "2026-10-31",
    "2026-11-02"
