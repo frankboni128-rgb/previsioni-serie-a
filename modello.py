@@ -1462,17 +1462,14 @@ riep_storico, ultime_storico = valuta_storico(storico) if len(storico) else ({"p
 
 # Storico per giornata: si parte dalla prima giornata giocata interamente con il modello attuale (aggiornato il 19/10/2026)
 STORICO_DAL_GIORNATA = 8
-P_MAX_SICURA = 0.77        # "la più sicura" ma non banale: quota giusta almeno 1,30
-
 def giocata_sicura(r):
-    """La giocata più probabile tra 1X2, doppia chance, Under/Over 2.5 e Goal/No Goal (probabilità fino al 77%)."""
+    """L'esito più probabile tra 1X2, Under/Over 2.5 e Goal/No Goal."""
     po = r.p_over25 if pd.notna(r.p_over25) else np.nan
     pg = r.p_goal if pd.notna(r.p_goal) else np.nan
     c = {("1X2", "1"): r.p1, ("1X2", "X"): r.pX, ("1X2", "2"): r.p2,
-         ("Doppia chance", "1X"): r.p1 + r.pX, ("Doppia chance", "X2"): r.pX + r.p2, ("Doppia chance", "12"): r.p1 + r.p2,
          ("Under/Over", "Over 2.5"): po, ("Under/Over", "Under 2.5"): 1 - po,
          ("Goal/No Goal", "Goal"): pg, ("Goal/No Goal", "No Goal"): 1 - pg}
-    c = {k: v for k, v in c.items() if pd.notna(v) and v <= P_MAX_SICURA}
+    c = {k: v for k, v in c.items() if pd.notna(v)}
     k = max(c, key=c.get)
     return k[0], k[1], float(c[k])
 
