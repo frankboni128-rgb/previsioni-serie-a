@@ -902,6 +902,31 @@ for ts in TEST_STAGIONI:
     if len(te_):
         p_blend[te_.index] = allena_ou(tr_).predict_proba(te_[OU_COLS])[:, 1]
 ou = tt.assign(over=(tt.gol_c + tt.gol_t > 2.5).astype(int))
+
+# ==== Fasce di fiducia per il budget: quanto spesso è uscita, nei test, la giocata più probabile di ogni partita
+FASCE = [("alta", 0.70, 3.0), ("media", 0.60, 2.0), ("bassa", 0.55, 1.0), ("nessuna", 0.0, 0.0)]
+MAX_BUDGET_GIORNATA = 10.0
+def fascia(p):
+    for nome, soglia, perc in FASCE:
+        if p >= soglia:
+            return nome, perc
+    return "nessuna", 0.0
+FASCE_STORICHE = {}
+try:
+    _po = p_blend.reindex(tt.index).values
+    _ok = np.isfinite(_po)
+    _gd = (tt.gol_c - tt.gol_t).values[_ok]; _tot = (tt.gol_c + tt.gol_t).values[_ok]
+    _cand = np.column_stack([P_comb[_ok], _po[_ok], 1 - _po[_ok]])           # 1, 2, X, Over, Under
+    _vinte = np.column_stack([_gd > 0, _gd < 0, _gd == 0, _tot > 2.5, _tot < 2.5])
+    _k = _cand.argmax(1); _p = _cand.max(1); _w = _vinte[np.arange(len(_k)), _k]
+    _f = np.array([fascia(x)[0] for x in _p])
+    for nome, _, _ in FASCE:
+        m_ = _f == nome
+        if m_.sum():
+            FASCE_STORICHE[nome] = {"partite": int(m_.sum()), "uscite": round(float(_w[m_].mean()), 3)}
+    print("Fasce di fiducia (test):", FASCE_STORICHE)
+except Exception as e:
+    print("Fasce di fiducia non calcolate:", e)
 ok_ou = ou.p_book_over.notna().values & p_blend.reindex(ou.index).notna().values
 tab_ou = pd.DataFrame({
     "Modello + quote": {"log_loss": log_loss(ou.over[ok_ou], np.clip(p_blend.reindex(ou.index).values[ok_ou], 1e-6, 1 - 1e-6))},
@@ -1208,6 +1233,129 @@ def spiega(r, cols, mdl, x, pc):
         print(f"Spiegazione {r.casa}-{r.trasf} non riuscita: {e}")
         return None
 
+# ==== Consiglio per partita (giocata più probabile + budget) e approfondimento discorsivo
+NOMI_MERCATO = {"1": "vittoria", "X": "pareggio", "2": "vittoria"}
+def consiglio_partita(r, ms):
+    c = {("1X2", "1"): ms[("1X2", "1")], ("1X2", "X"): ms[("1X2", "X")], ("1X2", "2"): ms[("1X2", "2")],
+         ("Under/Over", "Over 2.5"): ms[("Under/Over", "Over 2.5")], ("Under/Over", "Under 2.5"): ms[("Under/Over", "Under 2.5")],
+         ("Goal/No Goal", "Goal"): ms[("Goal/No Goal", "Goal")], ("Goal/No Goal", "No Goal"): ms[("Goal/No Goal", "No Goal")]}
+    (mk, es), p = max(c.items(), key=lambda kv: kv[1])
+    nome, perc = fascia(float(p))
+    quote = {("1X2", "1"): r.q1, ("1X2", "X"): r.qX, ("1X2", "2"): r.q2,
+             ("Under/Over", "Over 2.5"): r.q_over, ("Under/Over", "Under 2.5"): r.q_under}
+    qb = quote.get((mk, es), np.nan)
+    return {"mercato": mk, "esito": es, "p": round(float(p), 3), "quota_giusta": round(1 / float(p), 2),
+            "quota_book": None if pd.isna(qb) else round(float(qb), 2), "fiducia": nome, "budget": perc,
+            "storico_fascia": FASCE_STORICHE.get(nome)}
+
+def _pl(n, uno, tanti):
+    return f"{n} {uno if n == 1 else tanti}"
+def _minusc(t):
+    return t[:1].lower() + t[1:]
+def _pc(x):
+    return f"{round(float(x) * 100)}%"
+def _num(x):
+    return f"{float(x):.1f}".replace(".", ",")
+
+def precedenti(casa, trasf, n=5):
+    h = df[~df.futura & df.gol_c.notna() & (df.lega == PRINCIPALE) &
+           (((df.casa == casa) & (df.trasf == trasf)) | ((df.casa == trasf) & (df.trasf == casa)))].sort_values("data").tail(n)
+    return [(x.casa, x.trasf, int(x.gol_c), int(x.gol_t), x.data.year) for x in h.itertuples()]
+
+def racconto(r, ms, P, an, sp, cons):
+    try:
+        C, T = r.casa, r.trasf
+        p1, pX, p2 = ms[("1X2", "1")], ms[("1X2", "X")], ms[("1X2", "2")]
+        po, pg = ms[("Under/Over", "Over 2.5")], ms[("Goal/No Goal", "Goal")]
+        g = np.arange(P.shape[0])
+        lc, lt = float(P.sum(axis=1) @ g), float(P.sum(axis=0) @ g)
+        par = []
+        # contesto
+        if an:
+            c, t = an["casa"], an["trasf"]
+            def momento(nome, x):
+                pt = x["punti_5"]
+                giud = ("arriva lanciatissima" if pt >= 12 else "arriva in un buon momento" if pt >= 9 else
+                        "arriva in un periodo altalenante" if pt >= 5 else "arriva in difficoltà")
+                v, n_, p_ = x["luogo_vnp"]
+                luogo = f"; {x['luogo']} quest'anno ha raccolto {_pl(v, 'vittoria', 'vittorie')}, {_pl(n_, 'pareggio', 'pareggi')} e {_pl(p_, 'sconfitta', 'sconfitte')}" if v + n_ + p_ else ""
+                return f"{nome} {giud}: {pt} punti nelle ultime cinque ({'-'.join(x['forma'])}){luogo}."
+            par.append(momento(C, c) + " " + momento(T, t))
+            # sfida di reparti
+            sf = []
+            if c.get("pos_attacco") and t.get("pos_difesa"):
+                n_sq = c["squadre"]
+                if c["pos_attacco"] <= n_sq / 3 and t["pos_difesa"] > n_sq / 2:
+                    sf.append(f"Il duello chiave è tra l'attacco di {C}, {c['pos_attacco']}° per gol segnati, e una difesa, quella di {T}, che è solo {t['pos_difesa']}ª per gol subiti")
+                elif t["pos_attacco"] <= n_sq / 3 and c["pos_difesa"] > n_sq / 2:
+                    sf.append(f"Il pericolo per {C} arriva dall'attacco di {T}, {t['pos_attacco']}° per gol segnati, contro una difesa di casa che è solo {c['pos_difesa']}ª per gol subiti")
+                elif c["pos_difesa"] <= n_sq / 3 and t["pos_difesa"] <= n_sq / 3:
+                    sf.append(f"Si affrontano due delle difese più solide del campionato ({C} {c['pos_difesa']}ª, {T} {t['pos_difesa']}ª per gol subiti)")
+            if c.get("xf_5") is not None and t.get("xf_5") is not None:
+                sf.append(f"Nelle ultime cinque {C} ha creato {_num(c['xf_5'])} xG a partita concedendone {_num(c['xs_5'])}, {T} {_num(t['xf_5'])} creati e {_num(t['xs_5'])} concessi")
+            for nome, x in [(C, c), (T, t)]:
+                if x.get("xf_5") is not None and x.get("gf_5") is not None:
+                    d_ = x["gf_5"] - x["xf_5"]
+                    if d_ >= 0.5:
+                        sf.append(f"{nome} sta segnando più di quanto produce ({_num(x['gf_5'])} gol contro {_num(x['xf_5'])} xG): è il tipo di rendimento che tende a sgonfiarsi")
+                    elif d_ <= -0.5:
+                        sf.append(f"{nome} produce più di quanto raccoglie ({_num(x['xf_5'])} xG contro {_num(x['gf_5'])} gol): prima o poi le occasioni si trasformano")
+            if sf:
+                par.append(". ".join(sf) + ".")
+        # come ci aspettiamo la partita
+        dom = C if lc > lt + 0.4 else T if lt > lc + 0.4 else None
+        ritmo = ("una partita aperta, con gol da entrambe le parti" if po >= 0.6 and pg >= 0.55 else
+                 "una partita con parecchi gol, ma non per forza equilibrata" if po >= 0.6 else
+                 "una partita bloccata, con poche occasioni pulite" if po <= 0.42 and pg <= 0.48 else
+                 "una partita giocata più sul controllo che sullo spettacolo" if po <= 0.45 else
+                 "una partita dal punteggio incerto, che può prendere qualsiasi direzione")
+        txt = f"Ci aspettiamo {ritmo}. Il modello stima {_num(lc)} gol attesi per {C} e {_num(lt)} per {T}"
+        txt += f", con {dom} a fare la partita." if dom else ", un equilibrio che si riflette anche nel pronostico."
+        txt += f" Over 2.5 al {_pc(po)}, entrambe a segno al {_pc(pg)}."
+        if an:
+            tot_o = an["casa"]["over_10"] + an["trasf"]["over_10"]; tot_g = an["casa"]["goal_10"] + an["trasf"]["goal_10"]
+            nn = an["casa"]["n_10"] + an["trasf"]["n_10"]
+            txt += f" Nelle loro ultime partite l'Over è uscito {tot_o} volte su {nn} e il Goal {tot_g} su {nn}."
+        par.append(txt)
+        # perché questo esito e non gli altri
+        fav, pf, alt, pa = (C, p1, T, p2) if p1 >= p2 else (T, p2, C, p1)
+        if abs(p1 - p2) < 0.08:
+            perche = (f"Sull'1X2 non c'è un vero favorito: {C} {_pc(p1)}, pareggio {_pc(pX)}, {T} {_pc(p2)}. "
+                      "È il tipo di partita in cui conviene guardare ai mercati sui gol più che al segno.")
+        else:
+            perche = f"Sul segno il modello vede avanti {fav} ({_pc(pf)}), con il pareggio al {_pc(pX)} e {alt} al {_pc(pa)}."
+            if sp and sp.get("fattori"):
+                pro = [_minusc(f["fattore"]) for f in sp["fattori"] if f["verso"] == fav and f["quota"] >= 0.1][:2]
+                contro = [_minusc(f["fattore"]) for f in sp["fattori"] if f["verso"] != fav and f["quota"] >= 0.1][:1]
+                if pro:
+                    perche += f" A spingere verso {fav} sono soprattutto {' e '.join(pro)}."
+                if contro:
+                    perche += f" L'unico segnale a favore di {alt} viene da {contro[0]}, non abbastanza per ribaltare il quadro."
+            if pX >= 0.30:
+                perche += " Il pareggio però è più probabile della media, ed è il rischio principale di questo pronostico."
+            elif pf >= 0.65:
+                perche += " Il pareggio resta un'ipotesi secondaria: servirebbe una giornata storta del favorito."
+        par.append(perche)
+        # precedenti
+        prec = precedenti(C, T)
+        if prec:
+            vc = sum(1 for a, b, x, y, _ in prec if (a == C and x > y) or (b == C and y > x))
+            vt = sum(1 for a, b, x, y, _ in prec if (a == T and x > y) or (b == T and y > x))
+            np_ = len(prec) - vc - vt
+            ult = ", ".join(f"{a}–{b} {x}-{y} ({anno})" for a, b, x, y, anno in prec[-3:])
+            par.append(f"Negli ultimi {len(prec)} precedenti in Serie A: {_pl(vc, 'vittoria', 'vittorie')} di {C}, {_pl(np_, 'pareggio', 'pareggi')}, {vt} di {T}. "
+                       f"I più recenti: {ult}. I precedenti contano poco nel modello, ma danno il polso della sfida.")
+        # sintesi
+        ris = ms.get("_ris_top", "")
+        sint = (f"In sintesi: la giocata più solida è {cons['esito']} ({cons['mercato']}) al {_pc(cons['p'])}"
+                + (f", fiducia {cons['fiducia']}, {str(cons['budget']).replace('.0', '')}% del budget" if cons["budget"] else ", troppo incerta per consigliare una puntata")
+                + (f". Risultato esatto più probabile: {ris}." if ris else "."))
+        par.append(sint)
+        return par
+    except Exception as e:
+        print(f"Racconto {r.casa}-{r.trasf} non riuscito: {e}")
+        return None
+
 def analisi_sicura(r, ms):
     try:
         return analizza(r, ms)
@@ -1269,6 +1417,12 @@ for r in prepara(df[df.futura]).itertuples():
     partite.append({"data": str(r.data.date()), "ora": ora, "casa": r.casa, "trasf": r.trasf,
                     "valori_usati": usa_val, "gol_attesi": round(gol_att, 2), "mercati": per_mercato,
                     "analisi": analisi_sicura(r, ms), "spiegazione": spiega(r, cols, mdl, x, pc)})
+    _p = partite[-1]
+    _p["consiglio"] = consiglio_partita(r, ms)
+    _top = per_mercato.get("Risultato esatto", [])
+    ms["_ris_top"] = " o ".join(v["esito"] for v in sorted(_top, key=lambda v: -(v["p"] or 0))[:2])
+    _p["racconto"] = racconto(r, ms, P, _p["analisi"], _p["spiegazione"], _p["consiglio"])
+    del ms["_ris_top"]
     candidati = [(v["valore"], m_, v) for m_, lst in per_mercato.items() for v in lst if v["valore"] is not None]
     miglior = max(candidati, key=lambda t: t[0]) if candidati else None
     ok_pick = bool(miglior and miglior[0] > 0.05)
@@ -1279,6 +1433,14 @@ for r in prepara(df[df.futura]).itertuples():
                           "pick_mercato": miglior[1] if ok_pick else "", "pick_esito": miglior[2]["esito"] if ok_pick else "",
                           "pick_quota": miglior[2]["quota_book"] if ok_pick else np.nan,
                           "pick_valore": miglior[0] if ok_pick else np.nan})
+# tetto di budget per giornata: se le giocate consigliate superano il 10%, si riducono in proporzione
+if partite:
+    _kg = chiave_giornata([p_["data"] for p_ in partite])
+    for k_ in set(_kg):
+        grp_ = [p_ for p_, kk in zip(partite, _kg) if kk == k_ and p_.get("consiglio")]
+        tot_ = sum(p_["consiglio"]["budget"] for p_ in grp_)
+        for p_ in grp_:
+            p_["consiglio"]["budget"] = round(p_["consiglio"]["budget"] * min(1.0, MAX_BUDGET_GIORNATA / tot_), 1) if tot_ else 0.0
 tot_piano = sum(g_["percentuale"] for g_ in piano)
 for g_ in piano:
     g_["percentuale"] = round(g_["percentuale"] * min(1.0, MAX_GIORNO / tot_piano), 4) if tot_piano else 0

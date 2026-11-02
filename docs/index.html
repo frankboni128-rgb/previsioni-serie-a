@@ -247,6 +247,26 @@ details.giornata-st>summary{grid-template-columns:auto 1fr auto !important}
 .g-freccia{font-size:1.4rem;color:var(--tenue);transition:transform .15s}
 details.giornata-st[open] .g-freccia{transform:rotate(90deg);color:var(--lime)}
 .g-esito{display:flex;align-items:center;gap:12px;padding:12px 14px 4px;font-size:.88rem;color:var(--tenue)}
+/* budget e consigli */
+.budget-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;border:1px solid rgba(255,255,255,.2);background:rgba(9,15,42,.88);padding:10px 14px;margin:0 0 16px;border-radius:4px}
+.budget-bar label{font:500 .95rem var(--cond);text-transform:uppercase;letter-spacing:.05em}
+.budget-bar input{width:7em}
+.budget-bar small{flex-basis:100%;color:var(--tenue);font-size:.75rem}
+.consiglio{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;margin-top:6px;padding:5px 8px;border-radius:3px;font-size:.8rem;background:rgba(255,255,255,.06);border-left:3px solid var(--tenue)}
+.consiglio b{font:600 1rem var(--cond);color:var(--inchiostro)}
+.consiglio span{color:var(--tenue)}
+.consiglio.f-alta{border-left-color:var(--lime)}.consiglio.f-alta b{color:var(--lime)}
+.consiglio.f-media{border-left-color:#B8FF7A}
+.consiglio.f-bassa{border-left-color:#FFD25C}
+.consiglio.f-nessuna{border-left-color:var(--ko)}
+/* approfondimenti */
+.giorno-ap{font:500 .9rem var(--cond);text-transform:uppercase;letter-spacing:.1em;color:var(--tenue);margin:22px 0 6px}
+article.appro{border:1px solid rgba(255,255,255,.18);background:rgba(9,15,42,.9);padding:14px 16px 8px;margin:0 0 12px;border-radius:4px}
+article.appro .appro-testa{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+article.appro h3{margin:0;font:600 1.35rem var(--cond);text-transform:uppercase;color:var(--inchiostro);letter-spacing:.02em}
+article.appro .appro-testa span{color:var(--tenue);font-size:.85rem}
+article.appro .consiglio{margin:8px 0 10px}
+article.appro p{line-height:1.55;margin:0 0 10px;font-size:.95rem}
 /* perché questo pronostico */
 .perche{margin:10px 0 14px}
 .perche h3{margin:8px 0 6px;color:var(--lime)}
@@ -292,6 +312,7 @@ details.giornata-st[open] .g-freccia{transform:rotate(90deg);color:var(--lime)}
   </header>
   <nav role="tablist">
     <button role="tab" aria-selected="true" data-vista="giornata">Giornata</button>
+    <button role="tab" aria-selected="false" data-vista="approfondimenti">Approfondimenti</button>
     <button role="tab" aria-selected="false" data-vista="fiducia">Affidabilità</button>
     <button role="tab" aria-selected="false" data-vista="storico">Storico</button>
   </nav>
@@ -323,10 +344,30 @@ function cerchio(){ return `<svg viewBox="0 0 48 40" preserveAspectRatio="none" 
 const NOME_ESITO = {"1": "vittoria casa (1)", "X": "pareggio (X)", "2": "vittoria trasferta (2)", "Over 2.5": "Over 2.5", "Under 2.5": "Under 2.5"};
 function leggiBudget(){ const x = parseFloat(String(leggiMemoria("budget", "")).replace(",", ".")); return isFinite(x) && x > 0 ? x : null; }
 
+const FASCE_JS = [["alta", 0.70, 3], ["media", 0.60, 2], ["bassa", 0.55, 1], ["nessuna", 0, 0]];
+function fasciaJS(p){ for (const f of FASCE_JS) if (p >= f[1]) return [f[0], f[2]]; return ["nessuna", 0]; }
+const NOME_GIOCATA = {"1": "1", "X": "X", "2": "2"};
+function testoBudget(c){
+  if (!c || !c.budget) return "nessuna puntata (troppo incerta)";
+  const b = leggiBudget(), v = String(c.budget).replace(".", ",");
+  return `${v}% del budget${b ? " · " + euro(b * c.budget / 100) : ""}`;
+}
+function barraBudget(){
+  const b = leggiBudget();
+  return `<div class="budget-bar"><label for="budget-in">Il tuo budget</label>
+    <input id="budget-in" class="num" inputmode="decimal" placeholder="es. 100" value="${b ? String(b).replace(".", ",") : ""}"><span>€</span>
+    <small>Resta salvato solo sul tuo telefono. Le puntate consigliate si calcolano in percentuale su questa cifra.</small></div>`;
+}
+function collegaBudget(){
+  const i = document.getElementById("budget-in");
+  if (!i) return;
+  i.addEventListener("change", () => { scriviMemoria("budget", i.value.trim()); mostra("giornata"); });
+}
+
 function cartaGiocata(){
   const G = D.giocata || {}, g = G.scelta;
   if (!g) return "";
-  const b = leggiBudget(), perc = +leggiMemoria("perc", "2");
+  const b = leggiBudget(), perc = fasciaJS(g.p)[1];
   const alt = (G.alternative || []).map(a => `${esc(a.partita)}: ${esc(NOME_ESITO[a.esito] || a.esito)} a ${q(a.quota)} (${pct(a.p)})`).join(" · ");
   return `<section class="giocata" aria-label="Giocata della giornata">
     <p class="etichetta">La giocata della giornata</p>
@@ -336,7 +377,7 @@ function cartaGiocata(){
       <div><b>${pct(g.p)}</b><span>probabilità secondo il modello</span></div>
       <div><b>${q(g.quota)}</b><span>quota quando è stata scelta</span></div>
       <div><b>${q(g.quota_giusta)}</b><span>quota minima da accettare</span></div>
-      <div><b>${b ? euro(b * perc / 100) : perc + "%"}</b><span>puntata, singola${b ? "" : " del budget"}</span></div>
+      <div><b>${perc ? (b ? euro(b * perc / 100) : perc + "%") : "0%"}</b><span>${perc ? `puntata, fiducia ${fasciaJS(g.p)[0]}${b ? "" : " (del budget)"}` : "nessuna puntata consigliata: probabilità sotto il 55%"}</span></div>
     </div>
     ${alt ? `<p class="alt">Le altre due scelte più solide: ${alt}</p>` : ""}
     <p class="alt">Scelta tra le partite della giornata come l'esito più probabile che rispetta la regola: ${esc(g.regola || G.regola || "")}. Una volta pubblicata non cambia più, così lo storico è onesto.</p>
@@ -346,7 +387,7 @@ function cartaGiocata(){
 function vistaGiornata(){
   if (!D.partite.length) return cartaGiocata() + `<div class="vuoto"><strong>Nessuna partita in programma</strong>
     Appena football-data pubblica il calendario della prossima giornata, le previsioni compaiono qui.</div>`;
-  let html = cartaGiocata() + `<div class="schedina"><div class="intestazione"><span>Partita</span><span>1</span><span>X</span><span>2</span></div>`;
+  let html = barraBudget() + cartaGiocata() + `<div class="schedina"><div class="intestazione"><span>Partita</span><span>1</span><span>X</span><span>2</span></div>`;
   let giornoPrec = "";
   D.partite.forEach((p, i) => {
     if (p.data !== giornoPrec){ html += `<div class="giorno">${dataLunga(p.data)}</div>`; giornoPrec = p.data; }
@@ -359,7 +400,8 @@ function vistaGiornata(){
           <span>Over 2.5 <b>${pct(trova(p,"Under/Over","Over 2.5").p)}</b></span>
           <span>Goal <b>${pct(trova(p,"Goal/No Goal","Goal").p)}</b></span>
           <span>Gol attesi <b>${String(p.gol_attesi).replace(".", ",")}</b></span>
-          <span>Più probabili <b>${esc(ris)}</b></span></div></div>
+          <span>Più probabili <b>${esc(ris)}</b></span></div>
+        ${p.consiglio ? `<div class="consiglio f-${p.consiglio.fiducia}"><b>${esc(p.consiglio.esito)}</b> <span>${esc(p.consiglio.mercato)} · ${pct(p.consiglio.p)} · fiducia ${esc(p.consiglio.fiducia)} · ${testoBudget(p.consiglio)}</span></div>` : ""}</div>
       ${["1","X","2"].map(k => `<div class="casella${k===max?" scelta":""}">${k===max?cerchio():""}${pct(pr[k])}</div>`).join("")}
     </summary><div class="dettaglio"></div></details>`;
   });
@@ -749,11 +791,33 @@ function sezioneGiornate(){
     }).join("")}`;
 }
 
+function vistaApprofondimenti(){
+  const P = (D.partite || []).filter(p => p.racconto && p.racconto.length);
+  if (!P.length) return `<h2>Approfondimenti</h2><div class="vuoto"><strong>Nessun approfondimento per ora</strong>
+    Compaiono qui appena è pubblicato il calendario della prossima giornata.</div>`;
+  let html = `<h2>Approfondimenti</h2>
+    <p class="lead">Partita per partita, cosa ci aspettiamo di vedere e perché. Scritto a partire dagli stessi numeri della scheda Giornata, aggiornato ogni mattina.</p>`;
+  let giorno = "";
+  P.forEach(p => {
+    if (p.data !== giorno){ html += `<p class="giorno-ap">${dataLunga(p.data)}</p>`; giorno = p.data; }
+    const c = p.consiglio, fs = c && c.storico_fascia;
+    html += `<article class="appro">
+      <div class="appro-testa"><h3>${esc(p.casa)} – ${esc(p.trasf)}</h3>${p.ora ? `<span>ore ${esc(p.ora)}</span>` : ""}</div>
+      ${c ? `<div class="consiglio f-${c.fiducia}"><b>${esc(c.esito)}</b> <span>${esc(c.mercato)} · ${pct(c.p)} · fiducia ${esc(c.fiducia)} · ${testoBudget(c)}</span></div>` : ""}
+      ${p.racconto.map(t => `<p>${esc(t)}</p>`).join("")}
+      ${fs ? `<p class="sotto">Nelle 7 stagioni di test le giocate con fiducia ${esc(c.fiducia)} sono uscite il ${pct(fs.uscite)} delle volte (${fs.partite} partite).</p>` : ""}
+    </article>`;
+  });
+  html += `<p class="avviso-val">Infortuni, squalifiche e formazioni ufficiali non sono inclusi: controllali prima di giocare. Le percentuali di budget servono a gestire il rischio, non garantiscono guadagni: con quote basse una sconfitta costa più di quanto rende una vittoria.</p>`;
+  return html;
+}
+
 function mostra(v){
   vistaCorrente = v;
   document.querySelectorAll("nav button").forEach(b => b.setAttribute("aria-selected", b.dataset.vista === v));
   const main = document.getElementById("vista");
-  main.innerHTML = {giornata: vistaGiornata, valore: vistaValore, fiducia: vistaFiducia, storico: vistaStorico}[v]();
+  main.innerHTML = {giornata: vistaGiornata, approfondimenti: vistaApprofondimenti, fiducia: vistaFiducia, storico: vistaStorico}[v]();
+  if (v === "giornata") collegaBudget();
   main.querySelectorAll("details.partita").forEach(d => d.addEventListener("toggle", () => d.open && apriDettaglio(d)));
   if (v === "valore") collegaGioco();
 }
