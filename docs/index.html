@@ -240,6 +240,13 @@ tr.r-ok td:first-child{box-shadow:inset 4px 0 0 var(--lime)}tr.r-ko td:first-chi
 td.segno{font-weight:800;font-size:1.1rem;text-align:center}
 tr.r-ok td.segno{color:var(--lime)}tr.r-ko td.segno{color:var(--ko)}tr.r-attesa td.segno{color:var(--tenue)}
 @media (max-width:520px){details.giornata-st>summary{grid-template-columns:1fr auto;row-gap:2px}.g-date{grid-column:1}.g-ris{grid-column:2;grid-row:1}}
+.st-totale{display:flex;align-items:center;gap:16px;border:1px solid rgba(255,255,255,.2);background:rgba(9,15,42,.9);padding:14px 16px;margin:6px 0 14px;border-radius:4px}
+.st-totale b{font:700 2.6rem/1 var(--cond);color:var(--inchiostro)}.st-totale b.su{color:var(--lime)}.st-totale b.giu{color:var(--ko)}
+.st-totale span{font:500 1rem var(--cond);text-transform:uppercase;letter-spacing:.04em}.st-totale small{font:400 .8rem var(--testo);text-transform:none;letter-spacing:0;color:var(--tenue)}
+details.giornata-st>summary{grid-template-columns:auto 1fr auto !important}
+.g-freccia{font-size:1.4rem;color:var(--tenue);transition:transform .15s}
+details.giornata-st[open] .g-freccia{transform:rotate(90deg);color:var(--lime)}
+.g-esito{display:flex;align-items:center;gap:12px;padding:12px 14px 4px;font-size:.88rem;color:var(--tenue)}
 /* perché questo pronostico */
 .perche{margin:10px 0 14px}
 .perche h3{margin:8px 0 6px;color:var(--lime)}
@@ -715,18 +722,21 @@ function giornoBreve(d){ const [y, m, g] = String(d).split("-"); return `${+g} $
 function sezioneGiornate(){
   const G = (D.storico && D.storico.giornate) || [];
   const tot = G.reduce((a, g) => [a[0] + g.azzeccate, a[1] + g.giocate], [0, 0]);
+  const totP = tot[1] ? Math.round(tot[0] / tot[1] * 100) : null;
   return `<h2>Storico</h2>
-    <p class="lead">Per ogni partita la giocata più sicura suggerita dal modello prima del fischio d'inizio, con il risultato finale.
-      Dalla giornata ${G[G.length - 1].giornata}, la prima con il modello attuale: <b>${tot[0]} giocate vinte su ${tot[1]}</b>
-      (${tot[1] ? Math.round(tot[0] / tot[1] * 100) : 0}%).</p>
+    <div class="st-totale">
+      <b class="${totP == null ? "" : totP >= 50 ? "su" : "giu"}">${totP == null ? "—" : totP + "%"}</b>
+      <span>successo totale del modello attuale<br><small>${tot[0]} giocate vinte su ${tot[1]} · dalla giornata ${G[G.length - 1].giornata}</small></span>
+    </div>
+    <p class="lead">Per ogni partita la giocata più probabile del modello (1X2, Under/Over 2.5 o Goal/No Goal), salvata prima del fischio d'inizio, con il risultato finale. Tocca una giornata per aprirla.</p>
     ${G.map((g, i) => {
       const per = g.percentuale == null ? "—" : Math.round(g.percentuale * 100) + "%";
       const cl = g.percentuale == null ? "" : g.percentuale >= 0.5 ? "su" : "giu";
       const periodo = g.dal === g.al ? giornoBreve(g.dal) : `${giornoBreve(g.dal)} – ${giornoBreve(g.al)}`;
-      return `<details class="giornata-st"${i === 0 ? " open" : ""}><summary>
-        <span class="g-num">Giornata ${g.giornata}</span><span class="g-date">${periodo}</span>
-        <span class="g-ris">${g.azzeccate}/${g.giocate}${g.giocate < g.partite.length ? ` <small>(${g.partite.length - g.giocate} da giocare)</small>` : ""}</span>
-        <span class="g-per ${cl}">${per}</span></summary>
+      return `<details class="giornata-st"><summary>
+        <span class="g-num">Giornata ${g.giornata}</span><span class="g-date">${periodo}</span><span class="g-freccia">›</span></summary>
+        <div class="g-esito"><b class="g-per ${cl}">${per}</b>
+          <span>successo della giornata · ${g.azzeccate} su ${g.giocate}${g.giocate < g.partite.length ? ` · ${g.partite.length - g.giocate} da giocare` : ""}</span></div>
         <div class="scroll"><table class="tab-st"><thead><tr><th>Partita</th><th>Giocata</th><th>Risultato</th><th></th></tr></thead><tbody>
         ${g.partite.map(p => {
           const st = p.ok == null ? "attesa" : p.ok ? "ok" : "ko";
