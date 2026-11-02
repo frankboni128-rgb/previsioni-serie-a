@@ -1279,7 +1279,7 @@ def racconto(r, ms, P, an, sp, cons):
                         "arriva in un periodo altalenante" if pt >= 5 else "arriva in difficoltà")
                 v, n_, p_ = x["luogo_vnp"]
                 luogo = f"; {x['luogo']} quest'anno ha raccolto {_pl(v, 'vittoria', 'vittorie')}, {_pl(n_, 'pareggio', 'pareggi')} e {_pl(p_, 'sconfitta', 'sconfitte')}" if v + n_ + p_ else ""
-                return f"{nome} {giud}: {pt} punti nelle ultime cinque ({'-'.join(x['forma'])}){luogo}."
+                return f"{nome} {giud}: {_pl(pt, 'punto', 'punti')} nelle ultime cinque ({'-'.join(x['forma'])}){luogo}."
             par.append(momento(C, c) + " " + momento(T, t))
             # sfida di reparti
             sf = []
