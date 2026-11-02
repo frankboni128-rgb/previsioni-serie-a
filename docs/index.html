@@ -838,7 +838,7 @@ function sezioneGiornate(){
         ${g.partite.map(p => {
           const st = p.ok == null ? "attesa" : p.ok ? "ok" : "ko";
           return `<tr class="r-${st}"><td>${esc(p.casa)} – ${esc(p.trasf)}<small>${giornoBreve(p.data)}</small></td>
-            <td><b>${esc(p.giocata)}</b> <small>${esc(p.mercato)} · ${pct(p.p)}</small></td>
+            <td><b>${esc(p.giocata || p.previsto || "")}</b> <small>${esc(p.mercato || "1X2")} · ${pct(p.p)}</small></td>
             <td>${p.risultato ? `<b>${esc(p.risultato)}</b>` : "da giocare"}</td>
             <td class="segno">${st === "ok" ? "✓" : st === "ko" ? "✗" : "…"}</td></tr>`;
         }).join("")}
