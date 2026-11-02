@@ -367,7 +367,7 @@ function collegaBudget(){
 function cartaGiocata(){
   const G = D.giocata || {}, g = G.scelta;
   if (!g) return "";
-  const b = leggiBudget(), perc = fasciaJS(g.p)[1];
+  const b = leggiBudget(), perc = +leggiMemoria("perc", "2");
   const alt = (G.alternative || []).map(a => `${esc(a.partita)}: ${esc(NOME_ESITO[a.esito] || a.esito)} a ${q(a.quota)} (${pct(a.p)})`).join(" · ");
   return `<section class="giocata" aria-label="Giocata della giornata">
     <p class="etichetta">La giocata della giornata</p>
@@ -377,7 +377,7 @@ function cartaGiocata(){
       <div><b>${pct(g.p)}</b><span>probabilità secondo il modello</span></div>
       <div><b>${q(g.quota)}</b><span>quota quando è stata scelta</span></div>
       <div><b>${q(g.quota_giusta)}</b><span>quota minima da accettare</span></div>
-      <div><b>${perc ? (b ? euro(b * perc / 100) : perc + "%") : "0%"}</b><span>${perc ? `puntata, fiducia ${fasciaJS(g.p)[0]}${b ? "" : " (del budget)"}` : "nessuna puntata consigliata: probabilità sotto il 55%"}</span></div>
+      <div><b>${b ? euro(b * perc / 100) : perc + "%"}</b><span>puntata, singola${b ? "" : " del budget"}</span></div>
     </div>
     ${alt ? `<p class="alt">Le altre due scelte più solide: ${alt}</p>` : ""}
     <p class="alt">Scelta tra le partite della giornata come l'esito più probabile che rispetta la regola: ${esc(g.regola || G.regola || "")}. Una volta pubblicata non cambia più, così lo storico è onesto.</p>
