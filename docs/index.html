@@ -241,7 +241,7 @@ td.segno{font-weight:800;font-size:1.1rem;text-align:center}
 tr.r-ok td.segno{color:var(--lime)}tr.r-ko td.segno{color:var(--ko)}tr.r-attesa td.segno{color:var(--tenue)}
 @media (max-width:520px){details.giornata-st>summary{grid-template-columns:1fr auto;row-gap:2px}.g-date{grid-column:1}.g-ris{grid-column:2;grid-row:1}}
 .st-totale{display:flex;align-items:center;gap:16px;border:1px solid rgba(255,255,255,.2);background:rgba(9,15,42,.9);padding:14px 16px;margin:6px 0 14px;border-radius:4px}
-.st-totale b{font:700 2.6rem/1 var(--cond);color:var(--inchiostro)}.st-totale b.su{color:var(--lime)}.st-totale b.giu{color:var(--ko)}
+.st-totale b{font:700 clamp(1.7rem,7vw,2.6rem)/1 var(--cond);color:var(--inchiostro);white-space:nowrap}.st-totale b.su{color:var(--lime)}.st-totale b.giu{color:var(--ko)}
 .st-totale span{font:500 1rem var(--cond);text-transform:uppercase;letter-spacing:.04em}.st-totale small{font:400 .8rem var(--testo);text-transform:none;letter-spacing:0;color:var(--tenue)}
 details.giornata-st>summary{grid-template-columns:auto 1fr auto !important}
 .g-freccia{font-size:1.4rem;color:var(--tenue);transition:transform .15s}
@@ -282,6 +282,12 @@ article.appro p{line-height:1.55;margin:0 0 10px;font-size:.95rem}
 .fat-ass{display:flex;justify-content:space-between;font-size:.7rem;color:var(--tenue);text-transform:uppercase;letter-spacing:.05em}
 .fat-ass em{font-style:normal}
 @media (max-width:520px){.fat,.fat-testa{grid-template-columns:1fr 1.3fr;}.fat-v{grid-column:1/-1;text-align:left;margin-top:-4px}}
+.profili{display:flex;gap:4px;margin-left:auto}
+.profili button{font:500 .8rem var(--cond);text-transform:uppercase;letter-spacing:.04em;color:var(--inchiostro);background:rgba(36,71,198,.35);border:1px solid rgba(255,255,255,.22);padding:5px 9px;border-radius:3px;cursor:pointer}
+.profili button[aria-pressed="true"]{background:var(--lime);color:#0B1230;border-color:var(--lime)}
+.g-budget{margin:0;padding:2px 14px 8px;font-size:.82rem;color:var(--tenue)}
+.g-budget b.su{color:var(--lime)}.g-budget b.giu{color:var(--ko)}
+@media (max-width:520px){.profili{margin-left:0;flex-basis:100%}}
 /* analisi partita */
 .analisi{margin:10px 0 6px}
 .analisi h3,.tit-mercati{margin:8px 0 8px;color:var(--lime)}
@@ -347,27 +353,49 @@ function leggiBudget(){ const x = parseFloat(String(leggiMemoria("budget", "")).
 const FASCE_JS = [["alta", 0.70, 3], ["media", 0.60, 2], ["bassa", 0.55, 1], ["nessuna", 0, 0]];
 function fasciaJS(p){ for (const f of FASCE_JS) if (p >= f[1]) return [f[0], f[2]]; return ["nessuna", 0]; }
 const NOME_GIOCATA = {"1": "1", "X": "X", "2": "2"};
-function testoBudget(c){
+const PROFILI = {prudente: ["Prudente", 0.5, 5], normale: ["Normale", 1, 10], aggressivo: ["Aggressivo", 1.5, 15]};
+function profilo(){ const p = leggiMemoria("profilo", "normale"); return PROFILI[p] ? p : "normale"; }
+function budgetGG(g){ return g && g.p && g.quota && g.p * g.quota - 1 >= 0.05 ? 2 : 1.5; }   // giocata della giornata
+function giocataInPartita(p){ const g = D.giocata && D.giocata.scelta; return g && g.casa === p.casa && g.trasf === p.trasf ? g : null; }
+function fattoreTetto(key){
+  const [, molt, tetto] = PROFILI[profilo()];
+  let tot = 0;
+  (D.partite || []).filter(p => p.giornata_key === key).forEach(p => {
+    if (p.consiglio) tot += p.consiglio.budget * molt;
+    if (giocataInPartita(p)) tot += budgetGG(giocataInPartita(p)) * molt;
+  });
+  return tot > tetto ? tetto / tot : 1;
+}
+function percEffettiva(base, key){ return Math.round(base * PROFILI[profilo()][1] * fattoreTetto(key) * 10) / 10; }
+function formatoPuntata(perc){
+  const b = leggiBudget(), v = String(perc).replace(".", ",");
+  return `${v}% del budget${b ? " · " + euro(b * perc / 100) : ""}`;
+}
+function testoBudget(c, key){
   if (!c || !c.budget) return "nessuna puntata (troppo incerta)";
-  const b = leggiBudget(), v = String(c.budget).replace(".", ",");
-  return `${v}% del budget${b ? " · " + euro(b * c.budget / 100) : ""}`;
+  return formatoPuntata(percEffettiva(c.budget, key));
 }
 function barraBudget(){
   const b = leggiBudget();
+  const pr = profilo(), [nome, molt, tetto] = PROFILI[pr];
   return `<div class="budget-bar"><label for="budget-in">Il tuo budget</label>
     <input id="budget-in" class="num" inputmode="decimal" placeholder="es. 100" value="${b ? String(b).replace(".", ",") : ""}"><span>€</span>
-    <small>Resta salvato solo sul tuo telefono. Le puntate consigliate si calcolano in percentuale su questa cifra.</small></div>`;
+    <div class="profili" role="group" aria-label="Profilo">${Object.entries(PROFILI).map(([k, v]) =>
+      `<button type="button" data-profilo="${k}" aria-pressed="${k === pr}">${v[0]}</button>`).join("")}</div>
+    <small>Profilo ${nome}: puntate × ${String(molt).replace(".", ",")}, al massimo il ${tetto}% del budget per giornata (se si supera, tutte le puntate si riducono in proporzione). Budget e profilo restano salvati solo sul tuo telefono.</small></div>`;
 }
 function collegaBudget(){
   const i = document.getElementById("budget-in");
   if (!i) return;
   i.addEventListener("change", () => { scriviMemoria("budget", i.value.trim()); mostra("giornata"); });
+  document.querySelectorAll("[data-profilo]").forEach(b => b.onclick = () => { scriviMemoria("profilo", b.dataset.profilo); mostra("giornata"); });
 }
 
 function cartaGiocata(){
   const G = D.giocata || {}, g = G.scelta;
   if (!g) return "";
-  const b = leggiBudget(), perc = +leggiMemoria("perc", "2");
+  const b = leggiBudget(), pm = (D.partite || []).find(p => p.casa === g.casa && p.trasf === g.trasf);
+  const perc = percEffettiva(budgetGG(g), pm ? pm.giornata_key : null), valore = g.p * g.quota - 1;
   const alt = (G.alternative || []).map(a => `${esc(a.partita)}: ${esc(NOME_ESITO[a.esito] || a.esito)} a ${q(a.quota)} (${pct(a.p)})`).join(" · ");
   return `<section class="giocata" aria-label="Giocata della giornata">
     <p class="etichetta">La giocata della giornata</p>
@@ -377,7 +405,7 @@ function cartaGiocata(){
       <div><b>${pct(g.p)}</b><span>probabilità secondo il modello</span></div>
       <div><b>${q(g.quota)}</b><span>quota quando è stata scelta</span></div>
       <div><b>${q(g.quota_giusta)}</b><span>quota minima da accettare</span></div>
-      <div><b>${b ? euro(b * perc / 100) : perc + "%"}</b><span>puntata, singola${b ? "" : " del budget"}</span></div>
+      <div><b>${b ? euro(b * perc / 100) : String(perc).replace(".", ",") + "%"}</b><span>puntata${b ? ` (${String(perc).replace(".", ",")}% del budget)` : " del budget"} · giocata di valore${valore >= 0.05 ? ", il modello la vede più probabile del bookmaker" : ""}</span></div>
     </div>
     ${alt ? `<p class="alt">Le altre due scelte più solide: ${alt}</p>` : ""}
     <p class="alt">Scelta tra le partite della giornata come l'esito più probabile che rispetta la regola: ${esc(g.regola || G.regola || "")}. Una volta pubblicata non cambia più, così lo storico è onesto.</p>
@@ -401,7 +429,7 @@ function vistaGiornata(){
           <span>Goal <b>${pct(trova(p,"Goal/No Goal","Goal").p)}</b></span>
           <span>Gol attesi <b>${String(p.gol_attesi).replace(".", ",")}</b></span>
           <span>Più probabili <b>${esc(ris)}</b></span></div>
-        ${p.consiglio ? `<div class="consiglio f-${p.consiglio.fiducia}"><b>${esc(p.consiglio.esito)}</b> <span>${esc(p.consiglio.mercato)} · ${pct(p.consiglio.p)} · fiducia ${esc(p.consiglio.fiducia)} · ${testoBudget(p.consiglio)}</span></div>` : ""}</div>
+        ${p.consiglio ? `<div class="consiglio f-${p.consiglio.fiducia}"><b>${esc(p.consiglio.esito)}</b> <span>${esc(p.consiglio.mercato)} · ${pct(p.consiglio.p)} · fiducia ${esc(p.consiglio.fiducia)} · ${testoBudget(p.consiglio, p.giornata_key)}</span></div>` : ""}</div>
       ${["1","X","2"].map(k => `<div class="casella${k===max?" scelta":""}">${k===max?cerchio():""}${pct(pr[k])}</div>`).join("")}
     </summary><div class="dettaglio"></div></details>`;
   });
@@ -770,6 +798,9 @@ function sezioneGiornate(){
       <b class="${totP == null ? "" : totP >= 50 ? "su" : "giu"}">${totP == null ? "—" : totP + "%"}</b>
       <span>successo totale del modello attuale<br><small>${tot[0]} giocate vinte su ${tot[1]} · dalla giornata ${G[G.length - 1].giornata}</small></span>
     </div>
+    ${D.storico.budget_simulato ? (() => { const B = D.storico.budget_simulato, d = B.attuale - B.partenza;
+      return `<div class="st-totale"><b class="${d >= 0 ? "su" : "giu"}">${euro(B.attuale)}</b>
+        <span>budget simulato · profilo Normale<br><small>partito da ${euro(B.partenza)} alla giornata ${G[G.length - 1].giornata}: ${d >= 0 ? "+" : ""}${euro(d)}. Giocate sicure con le fasce di fiducia più la giocata della giornata, alle quote reali.</small></span></div>`; })() : ""}
     <p class="lead">Per ogni partita la giocata più probabile del modello (1X2, Under/Over 2.5 o Goal/No Goal), salvata prima del fischio d'inizio, con il risultato finale. Tocca una giornata per aprirla.</p>
     ${G.map((g, i) => {
       const per = g.percentuale == null ? "—" : Math.round(g.percentuale * 100) + "%";
@@ -779,6 +810,7 @@ function sezioneGiornate(){
         <span class="g-num">Giornata ${g.giornata}</span><span class="g-date">${periodo}</span><span class="g-freccia">›</span></summary>
         <div class="g-esito"><b class="g-per ${cl}">${per}</b>
           <span>successo della giornata · ${g.azzeccate} su ${g.giocate}${g.giocate < g.partite.length ? ` · ${g.partite.length - g.giocate} da giocare` : ""}</span></div>
+        ${g.budget && g.budget.giocate ? `<p class="g-budget">Budget simulato (Normale): da ${euro(g.budget.inizio)} a <b class="${g.budget.fine >= g.budget.inizio ? "su" : "giu"}">${euro(g.budget.fine)}</b> · ${g.budget.giocate} puntate${g.budget.stimate ? ` (${g.budget.stimate} con quota stimata)` : ""}</p>` : ""}
         <div class="scroll"><table class="tab-st"><thead><tr><th>Partita</th><th>Giocata</th><th>Risultato</th><th></th></tr></thead><tbody>
         ${g.partite.map(p => {
           const st = p.ok == null ? "attesa" : p.ok ? "ok" : "ko";
@@ -803,7 +835,7 @@ function vistaApprofondimenti(){
     const c = p.consiglio, fs = c && c.storico_fascia;
     html += `<article class="appro">
       <div class="appro-testa"><h3>${esc(p.casa)} – ${esc(p.trasf)}</h3>${p.ora ? `<span>ore ${esc(p.ora)}</span>` : ""}</div>
-      ${c ? `<div class="consiglio f-${c.fiducia}"><b>${esc(c.esito)}</b> <span>${esc(c.mercato)} · ${pct(c.p)} · fiducia ${esc(c.fiducia)} · ${testoBudget(c)}</span></div>` : ""}
+      ${c ? `<div class="consiglio f-${c.fiducia}"><b>${esc(c.esito)}</b> <span>${esc(c.mercato)} · ${pct(c.p)} · fiducia ${esc(c.fiducia)} · ${testoBudget(c, p.giornata_key)}</span></div>` : ""}
       ${p.racconto.map(t => `<p>${esc(t)}</p>`).join("")}
       ${fs ? `<p class="sotto">Nelle 7 stagioni di test le giocate con fiducia ${esc(c.fiducia)} sono uscite il ${pct(fs.uscite)} delle volte (${fs.partite} partite).</p>` : ""}
     </article>`;

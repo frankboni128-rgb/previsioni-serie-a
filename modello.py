@@ -1433,14 +1433,10 @@ for r in prepara(df[df.futura]).itertuples():
                           "pick_mercato": miglior[1] if ok_pick else "", "pick_esito": miglior[2]["esito"] if ok_pick else "",
                           "pick_quota": miglior[2]["quota_book"] if ok_pick else np.nan,
                           "pick_valore": miglior[0] if ok_pick else np.nan})
-# tetto di budget per giornata: se le giocate consigliate superano il 10%, si riducono in proporzione
+# chiave della giornata per ogni partita: nell'app serve a applicare il tetto di budget del profilo scelto
 if partite:
-    _kg = chiave_giornata([p_["data"] for p_ in partite])
-    for k_ in set(_kg):
-        grp_ = [p_ for p_, kk in zip(partite, _kg) if kk == k_ and p_.get("consiglio")]
-        tot_ = sum(p_["consiglio"]["budget"] for p_ in grp_)
-        for p_ in grp_:
-            p_["consiglio"]["budget"] = round(p_["consiglio"]["budget"] * min(1.0, MAX_BUDGET_GIORNATA / tot_), 1) if tot_ else 0.0
+    for p_, k_ in zip(partite, chiave_giornata([p_["data"] for p_ in partite])):
+        p_["giornata_key"] = str(k_)
 tot_piano = sum(g_["percentuale"] for g_ in piano)
 for g_ in piano:
     g_["percentuale"] = round(g_["percentuale"] * min(1.0, MAX_GIORNO / tot_piano), 4) if tot_piano else 0
@@ -1663,6 +1659,57 @@ def giornate_storico(s):
 
 giornate_st = giornate_storico(storico) if len(storico) else []
 
+# ==== Budget simulato nello storico: un giocatore con profilo "Normale" che parte da 100 €
+BUDGET_GIOCATA_GIORNATA = (1.5, 2.0)      # 2% se il modello la vede almeno il 5% più probabile del bookmaker
+def budget_giocata_giornata(p, quota):
+    try:
+        return BUDGET_GIOCATA_GIORNATA[1] if float(p) * float(quota) - 1 >= 0.05 else BUDGET_GIOCATA_GIORNATA[0]
+    except Exception:
+        return BUDGET_GIOCATA_GIORNATA[0]
+
+def simula_budget(giornate, partenza=100.0, tetto=MAX_BUDGET_GIORNATA):
+    q_ = df[~df.futura & (df.lega == PRINCIPALE) & (df.stagione == COD_CORRENTE)].set_index(["casa", "trasf"])
+    def quota(casa, trasf, mercato, esito, p):
+        col = {"1": "q1", "X": "qX", "2": "q2", "Over 2.5": "q_over", "Under 2.5": "q_under"}.get(esito)
+        if col and (casa, trasf) in q_.index:
+            v = q_.loc[(casa, trasf), col]
+            v = v.iloc[0] if hasattr(v, "iloc") else v
+            if pd.notna(v) and v > 1:
+                return float(v), False
+        return round(max(1.01, 0.93 / p), 2), True          # quota non disponibile (es. Goal/No Goal): stima con margine 7%
+    gg_reg = giocate_reg if len(giocate_reg) else pd.DataFrame(columns=["casa", "trasf"])
+    cassa = partenza
+    for g in sorted(giornate, key=lambda x: x["giornata"]):
+        scom = []
+        for p in g["partite"]:
+            if p["ok"] is None:
+                continue
+            perc = fascia(p["p"])[1]
+            if perc:
+                qq, stim = quota(p["casa"], p["trasf"], p["mercato"], p["giocata"], p["p"])
+                scom.append({"perc": perc, "quota": qq, "vinta": p["ok"], "stimata": stim})
+            # la giocata della giornata, se cade su questa partita
+            gr = gg_reg[(gg_reg.casa == p["casa"]) & (gg_reg.trasf == p["trasf"])]
+            if len(gr):
+                x = gr.iloc[0]; gc, gt = map(int, p["risultato"].split("-"))
+                scom.append({"perc": budget_giocata_giornata(x.p, x.quota), "quota": float(x.quota),
+                             "vinta": bool(esito_giocata(str(x.mercato), str(x.esito), gc, gt)), "stimata": False})
+        tot = sum(b["perc"] for b in scom)
+        k = min(1.0, tetto / tot) if tot else 1.0
+        inizio = cassa
+        for b in scom:
+            puntata = inizio * b["perc"] * k / 100
+            cassa += puntata * (b["quota"] - 1) if b["vinta"] else -puntata
+        g["budget"] = {"inizio": round(inizio, 2), "fine": round(cassa, 2), "giocate": len(scom),
+                       "stimate": sum(1 for b in scom if b["stimata"])}
+    return {"partenza": partenza, "attuale": round(cassa, 2)}
+
+try:
+    BUDGET_SIM = simula_budget(giornate_st) if giornate_st else None
+except Exception as e:
+    print("Simulazione budget non riuscita:", e)
+    BUDGET_SIM = None
+
 def valuta_giocate(g):
     if not len(g):
         return {"giocate": 0}, []
@@ -1720,7 +1767,7 @@ dati = {
         "per_stagione": PER_STAGIONE,
         "giocata_giornata": {"confronto": GG_CONFRONTO, "per_stagione": GG_STAGIONI, "regola_oggi": descrivi(REGOLA_OGGI)},
     },
-    "storico": {"riepilogo": riep_storico, "ultime": ultime_storico, "giornate": giornate_st,
+    "storico": {"riepilogo": riep_storico, "ultime": ultime_storico, "giornate": giornate_st, "budget_simulato": BUDGET_SIM,
                 "giocate": {"riepilogo": riep_giocate, "elenco": elenco_giocate}},
     "giocata": {"scelta": GIOCATA, "alternative": ALTERNATIVE_GG, "date": GIORNATA_DATE, "regola": descrivi(REGOLA_OGGI)},
 }
