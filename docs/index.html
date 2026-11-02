@@ -288,6 +288,10 @@ article.appro p{line-height:1.55;margin:0 0 10px;font-size:.95rem}
 .g-budget{margin:0;padding:2px 14px 8px;font-size:.82rem;color:var(--tenue)}
 .g-budget b.su{color:var(--lime)}.g-budget b.giu{color:var(--ko)}
 @media (max-width:520px){.profili{margin-left:0;flex-basis:100%}}
+.avviso-app{display:flex;align-items:center;gap:10px;margin:10px 0 0;padding:10px 12px;border:1px solid rgba(226,184,102,.5);background:rgba(226,184,102,.12);border-radius:6px;position:relative;z-index:2}
+.avviso-app p{margin:0;flex:1;font-size:.82rem;color:var(--tenue)}.avviso-app p b{display:block;color:var(--inchiostro);font:600 .95rem var(--cond);text-transform:uppercase;letter-spacing:.03em}
+.avviso-app a{background:var(--lime);color:#1C1A22;font:600 .85rem var(--cond);text-transform:uppercase;padding:7px 12px;border-radius:4px;text-decoration:none}
+.avviso-app button{background:none;border:0;color:var(--tenue);font-size:1rem;cursor:pointer;padding:4px}
 /* analisi partita */
 .analisi{margin:10px 0 6px}
 .analisi h3,.tit-mercati{margin:8px 0 8px;color:var(--lime)}
@@ -878,6 +882,22 @@ function mostra(v){
 }
 
 document.querySelectorAll("nav button").forEach(b => b.onclick = () => mostra(b.dataset.vista));
+
+// Avviso "nuova versione dell'app": compare solo dentro l'app Android, quando ne esiste una più recente
+(function avvisoApp(){
+  const ua = navigator.userAgent, inApp = /; wv\)/.test(ua) || /xgolApp\//.test(ua);
+  if (!inApp) return;
+  const m = ua.match(/xgolApp\/(\d+)/), installata = m ? +m[1] : 0;
+  fetch("versione_app.json?t=" + Date.now()).then(r => r.ok ? r.json() : null).then(v => {
+    if (!v || !(v.versione > installata) || leggiMemoria("avviso_chiuso", "") === String(v.versione)) return;
+    const d = document.createElement("div");
+    d.className = "avviso-app";
+    d.innerHTML = `<p><b>È uscita una nuova versione di xgol</b>Icona e app aggiornate: tocca per scaricarla e installala sopra quella che hai.</p>
+      <a href="https://github.com/frankboni128-rgb/previsioni-serie-a/raw/main/docs/xgol.apk">Aggiorna</a><button type="button" aria-label="Chiudi">✕</button>`;
+    d.querySelector("button").onclick = () => { scriviMemoria("avviso_chiuso", String(v.versione)); d.remove(); };
+    document.querySelector(".pagina").prepend(d);
+  }).catch(() => {});
+})();
 fetch("dati.json?t=" + Date.now()).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
   D = d;
   const [dd, hh] = String(d.aggiornato).split(" "), [y, mo, gg] = dd.split("-");

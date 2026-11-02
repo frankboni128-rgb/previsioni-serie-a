@@ -37,7 +37,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898315+github-actions[bot]@users.noreply.github.com"
-          git add docs/xgol.apk
+          echo "{\"versione\": $GITHUB_RUN_NUMBER}" > docs/versione_app.json
+          git add docs/xgol.apk docs/versione_app.json
           git diff --staged --quiet && exit 0
           git commit -m "Nuova versione app Android"
           for i in 1 2 3 4 5; do git pull --rebase && git push && exit 0; sleep 15; done

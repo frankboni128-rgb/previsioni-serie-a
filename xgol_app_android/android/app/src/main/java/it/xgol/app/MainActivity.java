@@ -25,12 +25,21 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // la pagina riconosce l'app e la sua versione, per avvisare quando ne esce una nuova
+        int versione = 0;
+        try { versione = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode; } catch (Exception e) { }
+        s.setUserAgentString(s.getUserAgentString() + " xgolApp/" + versione);
+        // i file da scaricare (come il nuovo APK) si aprono nel browser
+        web.setDownloadListener((url, ua, cd, mime, len) -> {
+            try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url))); } catch (Exception e) { }
+        });
         web.setWebChromeClient(new WebChromeClient());
         web.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest req) {
                 Uri u = req.getUrl();
-                if (u.toString().startsWith(SITO)) return false;   // pagine dell'app: restano dentro
+                String t = u.toString();
+                if (t.startsWith(SITO) && !t.endsWith(".apk")) return false;   // pagine dell'app: restano dentro
                 try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (Exception e) { }
                 return true;                                         // link esterni: browser
             }
