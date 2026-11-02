@@ -1,5 +1,5 @@
 {
- "aggiornato": "2026-11-02 03:50",
+ "aggiornato": "2026-11-02 04:33",
  "stagione": "2026/27",
  "note": [
   "Expected goals (Understat) non disponibili in questo aggiornamento: modello un po' meno preciso."
@@ -533,7 +533,27 @@
      "valore_trasf": 353,
      "diff_xg": null
     }
-   }
+   },
+   "consiglio": {
+    "mercato": "Goal/No Goal",
+    "esito": "Goal",
+    "p": 0.643,
+    "quota_giusta": 1.55,
+    "quota_book": null,
+    "fiducia": "media",
+    "budget": 2.0,
+    "storico_fascia": {
+     "partite": 692,
+     "uscite": 0.65
+    }
+   },
+   "racconto": [
+    "Sassuolo arriva in difficoltà: 1 punti nelle ultime cinque (P-N-P-P-P); in casa quest'anno ha raccolto 2 vittorie, 1 pareggio e 1 sconfitta. Fiorentina arriva in difficoltà: 2 punti nelle ultime cinque (N-P-P-P-N); in trasferta quest'anno ha raccolto 1 vittoria, 0 pareggi e 3 sconfitte.",
+    "Ci aspettiamo una partita aperta, con gol da entrambe le parti. Il modello stima 1,5 gol attesi per Sassuolo e 1,7 per Fiorentina, un equilibrio che si riflette anche nel pronostico. Over 2.5 al 62%, entrambe a segno al 64%. Nelle loro ultime partite l'Over è uscito 15 volte su 20 e il Goal 16 su 20.",
+    "Sul segno il modello vede avanti Fiorentina (41%), con il pareggio al 29% e Sassuolo al 30%. A spingere verso Fiorentina sono soprattutto quote dei bookmaker.",
+    "Negli ultimi 5 precedenti in Serie A: 2 vittorie di Sassuolo, 1 pareggio, 2 di Fiorentina. I più recenti: Fiorentina–Sassuolo 5-1 (2024), Sassuolo–Fiorentina 3-1 (2025), Fiorentina–Sassuolo 0-0 (2026). I precedenti contano poco nel modello, ma danno il polso della sfida.",
+    "In sintesi: la giocata più solida è Goal (Goal/No Goal) al 64%, fiducia media, 2% del budget. Risultato esatto più probabile: 1-1 o 1-2."
+   ]
   },
   {
    "data": "2026-11-02",
@@ -1062,7 +1082,27 @@
      "valore_trasf": 156,
      "diff_xg": null
     }
-   }
+   },
+   "consiglio": {
+    "mercato": "1X2",
+    "esito": "1",
+    "p": 0.656,
+    "quota_giusta": 1.52,
+    "quota_book": 1.5,
+    "fiducia": "media",
+    "budget": 2.0,
+    "storico_fascia": {
+     "partite": 692,
+     "uscite": 0.65
+    }
+   },
+   "racconto": [
+    "Atalanta arriva in un periodo altalenante: 5 punti nelle ultime cinque (P-V-P-N-N); in casa quest'anno ha raccolto 3 vittorie, 1 pareggio e 1 sconfitta. Parma arriva in difficoltà: 4 punti nelle ultime cinque (V-P-P-P-N); in trasferta quest'anno ha raccolto 0 vittorie, 0 pareggi e 4 sconfitte.",
+    "Ci aspettiamo una partita con parecchi gol, ma non per forza equilibrata. Il modello stima 2,2 gol attesi per Atalanta e 0,9 per Parma, con Atalanta a fare la partita. Over 2.5 al 62%, entrambe a segno al 55%. Nelle loro ultime partite l'Over è uscito 12 volte su 20 e il Goal 12 su 20.",
+    "Sul segno il modello vede avanti Atalanta (66%), con il pareggio al 21% e Parma al 13%. A spingere verso Atalanta sono soprattutto quote dei bookmaker. Il pareggio resta un'ipotesi secondaria: servirebbe una giornata storta del favorito.",
+    "Negli ultimi 5 precedenti in Serie A: 3 vittorie di Atalanta, 1 pareggio, 1 di Parma. I più recenti: Atalanta–Parma 2-3 (2025), Parma–Atalanta 1-1 (2025), Atalanta–Parma 4-0 (2026). I precedenti contano poco nel modello, ma danno il polso della sfida.",
+    "In sintesi: la giocata più solida è 1 (1X2) al 66%, fiducia media, 2% del budget. Risultato esatto più probabile: 2-0 o 2-1."
+   ]
   }
  ],
  "valore": [],
@@ -1267,13 +1307,13 @@
    {
     "versione": "Semplice + modello bayesiano (solo Serie A)",
     "variabili": 8,
-    "errore_serie_a": 0.9765,
+    "errore_serie_a": 0.9768,
     "errore_chiusura_serie_a": 0.9742,
-    "errore_modello_su_chiusura_serie_a": 0.9765,
-    "clv_serie_a": -0.0339,
-    "resa_serie_a": 0.0815,
-    "giocate_serie_a": 1086,
-    "kelly_serie_a": 226.11
+    "errore_modello_su_chiusura_serie_a": 0.9768,
+    "clv_serie_a": -0.0354,
+    "resa_serie_a": 0.0759,
+    "giocate_serie_a": 1090,
+    "kelly_serie_a": 193.49
    }
   ],
   "copertura_formazioni": {
@@ -7675,106 +7715,106 @@
       "data": "2026-10-31",
       "casa": "Bologna",
       "trasf": "Monza",
-      "previsto": "1",
+      "mercato": "1X2",
+      "giocata": "1",
       "p": 0.573,
       "risultato": "2-1",
-      "esito": "1",
       "ok": true
      },
      {
       "data": "2026-10-31",
       "casa": "Milan",
       "trasf": "Inter",
-      "previsto": "2",
-      "p": 0.494,
+      "mercato": "Goal/No Goal",
+      "giocata": "Goal",
+      "p": 0.61,
       "risultato": "3-1",
-      "esito": "1",
-      "ok": false
+      "ok": true
      },
      {
       "data": "2026-10-31",
       "casa": "Udinese",
       "trasf": "Roma",
-      "previsto": "2",
+      "mercato": "1X2",
+      "giocata": "2",
       "p": 0.641,
       "risultato": "2-5",
-      "esito": "2",
       "ok": true
      },
      {
       "data": "2026-11-01",
       "casa": "Como",
       "trasf": "Venezia",
-      "previsto": "1",
+      "mercato": "1X2",
+      "giocata": "1",
       "p": 0.758,
       "risultato": null,
-      "esito": null,
       "ok": null
      },
      {
       "data": "2026-11-01",
       "casa": "Frosinone",
       "trasf": "Torino",
-      "previsto": "1",
-      "p": 0.419,
+      "mercato": "Goal/No Goal",
+      "giocata": "Goal",
+      "p": 0.703,
       "risultato": null,
-      "esito": null,
       "ok": null
      },
      {
       "data": "2026-11-01",
       "casa": "Juventus",
       "trasf": "Napoli",
-      "previsto": "1",
-      "p": 0.423,
+      "mercato": "Goal/No Goal",
+      "giocata": "Goal",
+      "p": 0.532,
       "risultato": null,
-      "esito": null,
       "ok": null
      },
      {
       "data": "2026-11-01",
       "casa": "Lazio",
       "trasf": "Cagliari",
-      "previsto": "1",
+      "mercato": "1X2",
+      "giocata": "1",
       "p": 0.675,
       "risultato": null,
-      "esito": null,
       "ok": null
      },
      {
       "data": "2026-11-01",
       "casa": "Lecce",
       "trasf": "Genoa",
-      "previsto": "2",
-      "p": 0.419,
+      "mercato": "Under/Over",
+      "giocata": "Under 2.5",
+      "p": 0.608,
       "risultato": null,
-      "esito": null,
       "ok": null
      },
      {
       "data": "2026-11-02",
       "casa": "Atalanta",
       "trasf": "Parma",
-      "previsto": "1",
+      "mercato": "1X2",
+      "giocata": "1",
       "p": 0.656,
       "risultato": null,
-      "esito": null,
       "ok": null
      },
      {
       "data": "2026-11-02",
       "casa": "Sassuolo",
       "trasf": "Fiorentina",
-      "previsto": "2",
-      "p": 0.411,
+      "mercato": "Goal/No Goal",
+      "giocata": "Goal",
+      "p": 0.643,
       "risultato": null,
-      "esito": null,
       "ok": null
      }
     ],
     "giocate": 3,
-    "azzeccate": 2,
-    "percentuale": 0.667
+    "azzeccate": 3,
+    "percentuale": 1.0
    },
    {
     "giornata": 9,
@@ -7785,106 +7825,106 @@
       "data": "2026-10-27",
       "casa": "Roma",
       "trasf": "Cagliari",
-      "previsto": "1",
+      "mercato": "1X2",
+      "giocata": "1",
       "p": 0.714,
       "risultato": "4-2",
-      "esito": "1",
       "ok": true
      },
      {
       "data": "2026-10-27",
       "casa": "Sassuolo",
       "trasf": "Lazio",
-      "previsto": "2",
-      "p": 0.399,
+      "mercato": "Goal/No Goal",
+      "giocata": "Goal",
+      "p": 0.555,
       "risultato": "2-6",
-      "esito": "2",
       "ok": true
      },
      {
       "data": "2026-10-27",
       "casa": "Torino",
       "trasf": "Como",
-      "previsto": "2",
-      "p": 0.514,
+      "mercato": "Goal/No Goal",
+      "giocata": "Goal",
+      "p": 0.543,
       "risultato": "1-3",
-      "esito": "2",
       "ok": true
      },
      {
       "data": "2026-10-28",
       "casa": "Genoa",
       "trasf": "Juventus",
-      "previsto": "2",
+      "mercato": "1X2",
+      "giocata": "2",
       "p": 0.604,
       "risultato": "2-0",
-      "esito": "1",
       "ok": false
      },
      {
       "data": "2026-10-28",
       "casa": "Milan",
       "trasf": "Bologna",
-      "previsto": "1",
+      "mercato": "1X2",
+      "giocata": "1",
       "p": 0.596,
       "risultato": "2-4",
-      "esito": "2",
       "ok": false
      },
      {
       "data": "2026-10-28",
       "casa": "Monza",
       "trasf": "Napoli",
-      "previsto": "2",
-      "p": 0.565,
+      "mercato": "Under/Over",
+      "giocata": "Over 2.5",
+      "p": 0.578,
       "risultato": "1-4",
-      "esito": "2",
       "ok": true
      },
      {
       "data": "2026-10-28",
       "casa": "Parma",
       "trasf": "Udinese",
-      "previsto": "2",
-      "p": 0.379,
+      "mercato": "Under/Over",
+      "giocata": "Under 2.5",
+      "p": 0.571,
       "risultato": "0-0",
-      "esito": "X",
-      "ok": false
+      "ok": true
      },
      {
       "data": "2026-10-28",
       "casa": "Venezia",
       "trasf": "Inter",
-      "previsto": "2",
+      "mercato": "1X2",
+      "giocata": "2",
       "p": 0.743,
       "risultato": "0-2",
-      "esito": "2",
       "ok": true
      },
      {
       "data": "2026-10-29",
       "casa": "Fiorentina",
       "trasf": "Atalanta",
-      "previsto": "1",
-      "p": 0.408,
+      "mercato": "Goal/No Goal",
+      "giocata": "Goal",
+      "p": 0.628,
       "risultato": "2-2",
-      "esito": "X",
-      "ok": false
+      "ok": true
      },
      {
       "data": "2026-10-29",
       "casa": "Frosinone",
       "trasf": "Lecce",
-      "previsto": "1",
-      "p": 0.564,
+      "mercato": "Under/Over",
+      "giocata": "Over 2.5",
+      "p": 0.673,
       "risultato": "5-1",
-      "esito": "1",
       "ok": true
      }
     ],
     "giocate": 10,
-    "azzeccate": 6,
-    "percentuale": 0.6
+    "azzeccate": 8,
+    "percentuale": 0.8
    },
    {
     "giornata": 8,
@@ -7895,326 +7935,106 @@
       "data": "2026-10-23",
       "casa": "Torino",
       "trasf": "Monza",
-      "previsto": "1",
-      "p": 0.494,
+      "mercato": "Goal/No Goal",
+      "giocata": "Goal",
+      "p": 0.583,
       "risultato": "3-2",
-      "esito": "1",
       "ok": true
      },
      {
       "data": "2026-10-24",
       "casa": "Cagliari",
       "trasf": "Bologna",
-      "previsto": "2",
-      "p": 0.398,
+      "mercato": "Under/Over",
+      "giocata": "Under 2.5",
+      "p": 0.571,
       "risultato": "0-2",
-      "esito": "2",
       "ok": true
      },
      {
       "data": "2026-10-24",
       "casa": "Como",
       "trasf": "Sassuolo",
-      "previsto": "1",
-      "p": 0.634,
+      "mercato": "Under/Over",
+      "giocata": "Over 2.5",
+      "p": 0.678,
       "risultato": "2-0",
-      "esito": "1",
-      "ok": true
+      "ok": false
      },
      {
       "data": "2026-10-24",
       "casa": "Lazio",
       "trasf": "Parma",
-      "previsto": "1",
+      "mercato": "1X2",
+      "giocata": "1",
       "p": 0.718,
       "risultato": "2-1",
-      "esito": "1",
       "ok": true
      },
      {
       "data": "2026-10-24",
       "casa": "Napoli",
       "trasf": "Roma",
-      "previsto": "2",
-      "p": 0.371,
+      "mercato": "Goal/No Goal",
+      "giocata": "Goal",
+      "p": 0.561,
       "risultato": "3-3",
-      "esito": "X",
-      "ok": false
+      "ok": true
      },
      {
       "data": "2026-10-25",
       "casa": "Atalanta",
       "trasf": "Frosinone",
-      "previsto": "1",
-      "p": 0.519,
+      "mercato": "Under/Over",
+      "giocata": "Over 2.5",
+      "p": 0.702,
       "risultato": "4-4",
-      "esito": "X",
-      "ok": false
+      "ok": true
      },
      {
       "data": "2026-10-25",
       "casa": "Genoa",
       "trasf": "Venezia",
-      "previsto": "1",
-      "p": 0.45,
+      "mercato": "Goal/No Goal",
+      "giocata": "Goal",
+      "p": 0.547,
       "risultato": "1-0",
-      "esito": "1",
-      "ok": true
+      "ok": false
      },
      {
       "data": "2026-10-25",
       "casa": "Inter",
       "trasf": "Fiorentina",
-      "previsto": "1",
+      "mercato": "1X2",
+      "giocata": "1",
       "p": 0.719,
       "risultato": "2-1",
-      "esito": "1",
       "ok": true
      },
      {
       "data": "2026-10-25",
       "casa": "Lecce",
       "trasf": "Juventus",
-      "previsto": "2",
+      "mercato": "1X2",
+      "giocata": "2",
       "p": 0.708,
       "risultato": "0-2",
-      "esito": "2",
       "ok": true
      },
      {
       "data": "2026-10-25",
       "casa": "Udinese",
       "trasf": "Milan",
-      "previsto": "2",
+      "mercato": "1X2",
+      "giocata": "2",
       "p": 0.603,
       "risultato": "0-2",
-      "esito": "2",
       "ok": true
      }
     ],
     "giocate": 10,
     "azzeccate": 8,
     "percentuale": 0.8
-   },
-   {
-    "giornata": 7,
-    "dal": "2026-10-16",
-    "al": "2026-10-19",
-    "partite": [
-     {
-      "data": "2026-10-16",
-      "casa": "Frosinone",
-      "trasf": "Sassuolo",
-      "previsto": "1",
-      "p": 0.382,
-      "risultato": "4-2",
-      "esito": "1",
-      "ok": true
-     },
-     {
-      "data": "2026-10-17",
-      "casa": "Bologna",
-      "trasf": "Inter",
-      "previsto": "2",
-      "p": 0.617,
-      "risultato": "1-3",
-      "esito": "2",
-      "ok": true
-     },
-     {
-      "data": "2026-10-17",
-      "casa": "Roma",
-      "trasf": "Genoa",
-      "previsto": "1",
-      "p": 0.677,
-      "risultato": "2-0",
-      "esito": "1",
-      "ok": true
-     },
-     {
-      "data": "2026-10-17",
-      "casa": "Venezia",
-      "trasf": "Napoli",
-      "previsto": "2",
-      "p": 0.588,
-      "risultato": "1-0",
-      "esito": "1",
-      "ok": false
-     },
-     {
-      "data": "2026-10-18",
-      "casa": "Fiorentina",
-      "trasf": "Como",
-      "previsto": "2",
-      "p": 0.483,
-      "risultato": "1-3",
-      "esito": "2",
-      "ok": true
-     },
-     {
-      "data": "2026-10-18",
-      "casa": "Juventus",
-      "trasf": "Lazio",
-      "previsto": "1",
-      "p": 0.587,
-      "risultato": "0-3",
-      "esito": "2",
-      "ok": false
-     },
-     {
-      "data": "2026-10-18",
-      "casa": "Milan",
-      "trasf": "Atalanta",
-      "previsto": "1",
-      "p": 0.525,
-      "risultato": "3-2",
-      "esito": "1",
-      "ok": true
-     },
-     {
-      "data": "2026-10-18",
-      "casa": "Udinese",
-      "trasf": "Lecce",
-      "previsto": "1",
-      "p": 0.517,
-      "risultato": "0-3",
-      "esito": "2",
-      "ok": false
-     },
-     {
-      "data": "2026-10-19",
-      "casa": "Monza",
-      "trasf": "Cagliari",
-      "previsto": "1",
-      "p": 0.386,
-      "risultato": "4-0",
-      "esito": "1",
-      "ok": true
-     },
-     {
-      "data": "2026-10-19",
-      "casa": "Parma",
-      "trasf": "Torino",
-      "previsto": "2",
-      "p": 0.405,
-      "risultato": "0-3",
-      "esito": "2",
-      "ok": true
-     }
-    ],
-    "giocate": 10,
-    "azzeccate": 7,
-    "percentuale": 0.7
-   },
-   {
-    "giornata": 6,
-    "dal": "2026-10-10",
-    "al": "2026-10-12",
-    "partite": [
-     {
-      "data": "2026-10-10",
-      "casa": "Genoa",
-      "trasf": "Fiorentina",
-      "previsto": "2",
-      "p": 0.433,
-      "risultato": "2-1",
-      "esito": "1",
-      "ok": false
-     },
-     {
-      "data": "2026-10-10",
-      "casa": "Inter",
-      "trasf": "Parma",
-      "previsto": "1",
-      "p": 0.87,
-      "risultato": "3-0",
-      "esito": "1",
-      "ok": true
-     },
-     {
-      "data": "2026-10-10",
-      "casa": "Napoli",
-      "trasf": "Frosinone",
-      "previsto": "1",
-      "p": 0.638,
-      "risultato": "3-0",
-      "esito": "1",
-      "ok": true
-     },
-     {
-      "data": "2026-10-11",
-      "casa": "Cagliari",
-      "trasf": "Juventus",
-      "previsto": "2",
-      "p": 0.698,
-      "risultato": "1-1",
-      "esito": "X",
-      "ok": false
-     },
-     {
-      "data": "2026-10-11",
-      "casa": "Como",
-      "trasf": "Roma",
-      "previsto": "2",
-      "p": 0.361,
-      "risultato": "0-0",
-      "esito": "X",
-      "ok": false
-     },
-     {
-      "data": "2026-10-11",
-      "casa": "Lazio",
-      "trasf": "Monza",
-      "previsto": "1",
-      "p": 0.553,
-      "risultato": "3-1",
-      "esito": "1",
-      "ok": true
-     },
-     {
-      "data": "2026-10-11",
-      "casa": "Lecce",
-      "trasf": "Bologna",
-      "previsto": "2",
-      "p": 0.544,
-      "risultato": "1-2",
-      "esito": "2",
-      "ok": true
-     },
-     {
-      "data": "2026-10-11",
-      "casa": "Sassuolo",
-      "trasf": "Milan",
-      "previsto": "2",
-      "p": 0.562,
-      "risultato": "1-1",
-      "esito": "X",
-      "ok": false
-     },
-     {
-      "data": "2026-10-12",
-      "casa": "Atalanta",
-      "trasf": "Venezia",
-      "previsto": "1",
-      "p": 0.615,
-      "risultato": "3-1",
-      "esito": "1",
-      "ok": true
-     },
-     {
-      "data": "2026-10-12",
-      "casa": "Torino",
-      "trasf": "Udinese",
-      "previsto": "1",
-      "p": 0.409,
-      "risultato": "2-1",
-      "esito": "1",
-      "ok": true
-     }
-    ],
-    "giocate": 10,
-    "azzeccate": 6,
-    "percentuale": 0.6
    }
   ],
   "giocate": {
