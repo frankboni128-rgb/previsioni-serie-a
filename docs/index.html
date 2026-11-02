@@ -285,7 +285,6 @@ tr.r-ok td.segno{color:var(--lime)}tr.r-ko td.segno{color:var(--ko)}tr.r-attesa 
   </header>
   <nav role="tablist">
     <button role="tab" aria-selected="true" data-vista="giornata">Giornata</button>
-    <button role="tab" aria-selected="false" data-vista="valore">Come giocare</button>
     <button role="tab" aria-selected="false" data-vista="fiducia">Affidabilità</button>
     <button role="tab" aria-selected="false" data-vista="storico">Storico</button>
   </nav>
@@ -706,30 +705,20 @@ function sezioneStoricoGiocate(){
 }
 
 function vistaStorico(){
-  const r = D.storico.riepilogo || {}, u = D.storico.ultime || [];
-  const testa = sezioneSimulazione() + sezioneStoricoGiocate();
-  if (!r.partite) return testa + `<h2>Tutte le previsioni</h2><div class="vuoto"><strong>Ancora nessuna partita valutata</strong>
-    Dopo la prima giornata giocata con il modello attivo, qui trovi come sono andate le previsioni.</div>` + sezioneGiornate();
-  return testa + `<h2>Come sono andate le previsioni</h2>
-    <p class="lead">Previsioni salvate prima di ogni partita e confrontate con il risultato vero.</p>
-    <div class="cifre">
-      <div><b>${r.partite}</b><span>partite valutate</span></div>
-      <div><b>${pct(r.esito_azzeccato)}</b><span>esito 1-X-2 più probabile azzeccato</span></div>
-      <div><b>${pct(r.over25_azzeccato)}</b><span>Under/Over 2.5 azzeccato</span></div>
-      ${r.giocate_valore ? `<div><b>${r.profitto_unita > 0 ? "+" : ""}${String(r.profitto_unita).replace(".", ",")}</b><span>unità sulle ${r.giocate_valore} giocate con valore (${r.giocate_vinte} vinte)</span></div>` : ""}
-    </div>
-    ${r.log_loss_bookmaker ? `<p class="lead">Errore medio 1-X-2: modello ${r.log_loss_modello_stesse.toFixed(4)}, bookmaker ${r.log_loss_bookmaker.toFixed(4)} (più basso è meglio).</p>` : ""}
-    ${sezioneGiornate()}`;
+  const G = (D.storico && D.storico.giornate) || [];
+  if (!G.length) return `<h2>Storico</h2><div class="vuoto"><strong>Ancora nessuna giornata nello storico</strong>
+    Le giornate compaiono qui man mano che vengono giocate.</div>`;
+  return sezioneGiornate();
 }
 
 function giornoBreve(d){ const [y, m, g] = String(d).split("-"); return `${+g} ${MESI[+m-1]}`; }
 function sezioneGiornate(){
   const G = (D.storico && D.storico.giornate) || [];
-  if (!G.length) return "";
   const tot = G.reduce((a, g) => [a[0] + g.azzeccate, a[1] + g.giocate], [0, 0]);
-  return `<h2>Giornata per giornata</h2>
-    <p class="lead">Per ogni partita: l'esito 1-X-2 che il modello dava come più probabile prima del fischio d'inizio e il risultato finale.
-      In totale <b>${tot[0]} su ${tot[1]}</b> (${tot[1] ? Math.round(tot[0] / tot[1] * 100) : 0}%).</p>
+  return `<h2>Storico</h2>
+    <p class="lead">Per ogni partita la giocata più sicura suggerita dal modello prima del fischio d'inizio, con il risultato finale.
+      Dalla giornata ${G[G.length - 1].giornata}, la prima con il modello attuale: <b>${tot[0]} giocate vinte su ${tot[1]}</b>
+      (${tot[1] ? Math.round(tot[0] / tot[1] * 100) : 0}%).</p>
     ${G.map((g, i) => {
       const per = g.percentuale == null ? "—" : Math.round(g.percentuale * 100) + "%";
       const cl = g.percentuale == null ? "" : g.percentuale >= 0.5 ? "su" : "giu";
@@ -738,13 +727,12 @@ function sezioneGiornate(){
         <span class="g-num">Giornata ${g.giornata}</span><span class="g-date">${periodo}</span>
         <span class="g-ris">${g.azzeccate}/${g.giocate}${g.giocate < g.partite.length ? ` <small>(${g.partite.length - g.giocate} da giocare)</small>` : ""}</span>
         <span class="g-per ${cl}">${per}</span></summary>
-        <div class="scroll"><table class="tab-st"><thead><tr><th>Partita</th><th>Previsto</th><th>Risultato</th><th></th></tr></thead><tbody>
+        <div class="scroll"><table class="tab-st"><thead><tr><th>Partita</th><th>Giocata</th><th>Risultato</th><th></th></tr></thead><tbody>
         ${g.partite.map(p => {
           const st = p.ok == null ? "attesa" : p.ok ? "ok" : "ko";
-          const nome = p.previsto === "1" ? p.casa : p.previsto === "2" ? p.trasf : "pareggio";
           return `<tr class="r-${st}"><td>${esc(p.casa)} – ${esc(p.trasf)}<small>${giornoBreve(p.data)}</small></td>
-            <td><b>${esc(p.previsto)}</b> ${esc(nome)} <small>${pct(p.p)}</small></td>
-            <td>${p.risultato ? `<b>${esc(p.risultato)}</b> <small>(${esc(p.esito)})</small>` : "—"}</td>
+            <td><b>${esc(p.giocata)}</b> <small>${esc(p.mercato)} · ${pct(p.p)}</small></td>
+            <td>${p.risultato ? `<b>${esc(p.risultato)}</b>` : "da giocare"}</td>
             <td class="segno">${st === "ok" ? "✓" : st === "ko" ? "✗" : "…"}</td></tr>`;
         }).join("")}
         </tbody></table></div></details>`;

@@ -1460,22 +1460,41 @@ def valuta_storico(s):
 
 riep_storico, ultime_storico = valuta_storico(storico) if len(storico) else ({"partite": 0}, [])
 
+# Storico per giornata: si parte dalla prima giornata giocata interamente con il modello attuale (aggiornato il 19/10/2026)
+STORICO_DAL_GIORNATA = 8
+P_MAX_SICURA = 0.77        # "la più sicura" ma non banale: quota giusta almeno 1,30
+
+def giocata_sicura(r):
+    """La giocata più probabile tra 1X2, doppia chance, Under/Over 2.5 e Goal/No Goal (probabilità fino al 77%)."""
+    po = r.p_over25 if pd.notna(r.p_over25) else np.nan
+    pg = r.p_goal if pd.notna(r.p_goal) else np.nan
+    c = {("1X2", "1"): r.p1, ("1X2", "X"): r.pX, ("1X2", "2"): r.p2,
+         ("Doppia chance", "1X"): r.p1 + r.pX, ("Doppia chance", "X2"): r.pX + r.p2, ("Doppia chance", "12"): r.p1 + r.p2,
+         ("Under/Over", "Over 2.5"): po, ("Under/Over", "Under 2.5"): 1 - po,
+         ("Goal/No Goal", "Goal"): pg, ("Goal/No Goal", "No Goal"): 1 - pg}
+    c = {k: v for k, v in c.items() if pd.notna(v) and v <= P_MAX_SICURA}
+    k = max(c, key=c.get)
+    return k[0], k[1], float(c[k])
+
+def esito_giocata(mercato, esito, gc, gt):
+    t, d = gc + gt, gc - gt
+    return {"1": d > 0, "X": d == 0, "2": d < 0, "1X": d >= 0, "X2": d <= 0, "12": d != 0,
+            "Over 2.5": t > 2.5, "Under 2.5": t < 2.5, "Goal": gc > 0 and gt > 0, "No Goal": gc == 0 or gt == 0}[esito]
+
 def giornate_storico(s):
-    """Storico raggruppato per giornata: esito più probabile previsto, risultato vero, giusto/sbagliato."""
     if not len(s) or "giornata" not in s:
         return []
     out = []
-    for g, grp in s[s.giornata.notna()].groupby("giornata"):
+    s = s[s.giornata.notna() & (s.giornata >= STORICO_DAL_GIORNATA)]
+    for g, grp in s.groupby("giornata"):
         partite = []
         for r in grp.sort_values(["data", "casa"]).itertuples():
-            pr_ = {"1": r.p1, "X": r.pX, "2": r.p2}
-            prev = max(pr_, key=pr_.get)
+            mk, es_, p_ = giocata_sicura(r)
             fatto = pd.notna(r.gol_c) and pd.notna(r.gol_t)
-            es = (("1" if r.gol_c > r.gol_t else "X" if r.gol_c == r.gol_t else "2") if fatto else None)
-            partite.append({"data": r.data, "casa": r.casa, "trasf": r.trasf, "previsto": prev,
-                            "p": round(float(pr_[prev]), 3),
+            partite.append({"data": r.data, "casa": r.casa, "trasf": r.trasf,
+                            "mercato": mk, "giocata": es_, "p": round(p_, 3),
                             "risultato": f"{int(r.gol_c)}-{int(r.gol_t)}" if fatto else None,
-                            "esito": es, "ok": (prev == es) if fatto else None})
+                            "ok": bool(esito_giocata(mk, es_, r.gol_c, r.gol_t)) if fatto else None})
         fatte = [p for p in partite if p["ok"] is not None]
         az = sum(1 for p in fatte if p["ok"])
         out.append({"giornata": int(g), "dal": min(p["data"] for p in partite), "al": max(p["data"] for p in partite),
