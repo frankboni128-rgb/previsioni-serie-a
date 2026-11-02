@@ -1,5 +1,5 @@
 {
- "aggiornato": "2026-11-02 04:33",
+ "aggiornato": "2026-11-02 05:07",
  "stagione": "2026/27",
  "note": [
   "Expected goals (Understat) non disponibili in questo aggiornamento: modello un po' meno preciso."
@@ -553,7 +553,8 @@
     "Sul segno il modello vede avanti Fiorentina (41%), con il pareggio al 29% e Sassuolo al 30%. A spingere verso Fiorentina sono soprattutto quote dei bookmaker.",
     "Negli ultimi 5 precedenti in Serie A: 2 vittorie di Sassuolo, 1 pareggio, 2 di Fiorentina. I più recenti: Fiorentina–Sassuolo 5-1 (2024), Sassuolo–Fiorentina 3-1 (2025), Fiorentina–Sassuolo 0-0 (2026). I precedenti contano poco nel modello, ma danno il polso della sfida.",
     "In sintesi: la giocata più solida è Goal (Goal/No Goal) al 64%, fiducia media, 2% del budget. Risultato esatto più probabile: 1-1 o 1-2."
-   ]
+   ],
+   "giornata_key": "2026-44W"
   },
   {
    "data": "2026-11-02",
@@ -1102,7 +1103,8 @@
     "Sul segno il modello vede avanti Atalanta (66%), con il pareggio al 21% e Parma al 13%. A spingere verso Atalanta sono soprattutto quote dei bookmaker. Il pareggio resta un'ipotesi secondaria: servirebbe una giornata storta del favorito.",
     "Negli ultimi 5 precedenti in Serie A: 3 vittorie di Atalanta, 1 pareggio, 1 di Parma. I più recenti: Atalanta–Parma 2-3 (2025), Parma–Atalanta 1-1 (2025), Atalanta–Parma 4-0 (2026). I precedenti contano poco nel modello, ma danno il polso della sfida.",
     "In sintesi: la giocata più solida è 1 (1X2) al 66%, fiducia media, 2% del budget. Risultato esatto più probabile: 2-0 o 2-1."
-   ]
+   ],
+   "giornata_key": "2026-44W"
   }
  ],
  "valore": [],
@@ -1310,10 +1312,10 @@
     "errore_serie_a": 0.9768,
     "errore_chiusura_serie_a": 0.9742,
     "errore_modello_su_chiusura_serie_a": 0.9768,
-    "clv_serie_a": -0.0354,
-    "resa_serie_a": 0.0759,
-    "giocate_serie_a": 1090,
-    "kelly_serie_a": 193.49
+    "clv_serie_a": -0.034,
+    "resa_serie_a": 0.0748,
+    "giocate_serie_a": 1093,
+    "kelly_serie_a": 157.13
    }
   ],
   "copertura_formazioni": {
@@ -7814,7 +7816,13 @@
     ],
     "giocate": 3,
     "azzeccate": 3,
-    "percentuale": 1.0
+    "percentuale": 1.0,
+    "budget": {
+     "inizio": 106.32,
+     "fine": 109.04,
+     "giocate": 3,
+     "stimate": 3
+    }
    },
    {
     "giornata": 9,
@@ -7924,7 +7932,13 @@
     ],
     "giocate": 10,
     "azzeccate": 8,
-    "percentuale": 0.8
+    "percentuale": 0.8,
+    "budget": {
+     "inizio": 103.96,
+     "fine": 106.32,
+     "giocate": 10,
+     "stimate": 2
+    }
    },
    {
     "giornata": 8,
@@ -8034,9 +8048,19 @@
     ],
     "giocate": 10,
     "azzeccate": 8,
-    "percentuale": 0.8
+    "percentuale": 0.8,
+    "budget": {
+     "inizio": 100.0,
+     "fine": 103.96,
+     "giocate": 10,
+     "stimate": 2
+    }
    }
   ],
+  "budget_simulato": {
+   "partenza": 100.0,
+   "attuale": 109.04
+  },
   "giocate": {
    "riepilogo": {
     "giocate": 3,
