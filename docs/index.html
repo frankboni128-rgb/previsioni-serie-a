@@ -367,20 +367,24 @@ function collegaBudget(){
 function cartaGiocata(){
   const G = D.giocata || {}, g = G.scelta;
   if (!g) return "";
-  const b = leggiBudget(), perc = fasciaJS(g.p)[1];
-  const alt = (G.alternative || []).map(a => `${esc(a.partita)}: ${esc(NOME_ESITO[a.esito] || a.esito)} a ${q(a.quota)} (${pct(a.p)})`).join(" · ");
+  const b = leggiBudget();
+  const [fid, perc] = g.fiducia ? [g.fiducia, +g.budget || 0] : fasciaJS(g.p);
+  const vecchia = !g.fiducia;                       // scelta con la regola precedente (quota almeno 1,70)
+  const nome = g.mercato === "1X2" ? (NOME_ESITO[g.esito] || g.esito) : g.esito;
+  const alt = (G.alternative || []).map(a => `${esc(a.partita)}: ${esc(a.esito)} (${pct(a.p)})`).join(" · ");
   return `<section class="giocata" aria-label="Giocata della giornata">
     <p class="etichetta">La giocata della giornata</p>
-    <p class="scelta">${esc(NOME_ESITO[g.esito] || g.esito)}</p>
+    <p class="scelta">${esc(nome)}</p>
     <p class="partita-g">${esc(g.partita)}, ${dataLunga(g.data)}${g.ora ? ", ore " + esc(g.ora) : ""}</p>
     <div class="numeri">
       <div><b>${pct(g.p)}</b><span>probabilità secondo il modello</span></div>
-      <div><b>${q(g.quota)}</b><span>quota quando è stata scelta</span></div>
+      ${g.quota ? `<div><b>${q(g.quota)}</b><span>quota del bookmaker</span></div>` : ""}
       <div><b>${q(g.quota_giusta)}</b><span>quota minima da accettare</span></div>
-      <div><b>${perc ? (b ? euro(b * perc / 100) : perc + "%") : "0%"}</b><span>${perc ? `puntata, fiducia ${fasciaJS(g.p)[0]}${b ? "" : " (del budget)"}` : "nessuna puntata consigliata: probabilità sotto il 55%"}</span></div>
+      ${vecchia ? "" : `<div><b>${perc ? (b ? euro(b * perc / 100) : String(perc).replace(".", ",") + "%") : "—"}</b><span>puntata · fiducia ${esc(fid)}${b ? "" : " (del budget)"}</span></div>`}
     </div>
-    ${alt ? `<p class="alt">Le altre due scelte più solide: ${alt}</p>` : ""}
-    <p class="alt">Scelta tra le partite della giornata come l'esito più probabile che rispetta la regola: ${esc(g.regola || G.regola || "")}. Una volta pubblicata non cambia più, così lo storico è onesto.</p>
+    ${alt && !vecchia ? `<p class="alt">Le altre più sicure: ${alt}</p>` : ""}
+    <p class="alt">${vecchia ? "Scelta con la regola precedente (quota almeno 1,70), prima dell'introduzione del budget: dalla prossima giornata la giocata della giornata è la più sicura, con il suo budget." :
+      "È la giocata con la fiducia più alta tra le partite della giornata, la stessa che trovi sotto la partita. Una volta pubblicata non cambia più, così lo storico è onesto."}</p>
   </section>`;
 }
 

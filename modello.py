@@ -1544,13 +1544,22 @@ if len(cf):
         prossima = tutta[ancora[tutta.index]]
         if prossima.empty:
             continue                      # giornata già iniziata senza giocata: passo alla successiva
-        sel = applica(prossima, REGOLA_OGGI, 3)
-        if sel.empty:
-            sel = applica(prossima, REGOLA_BASE, 3)
-        righe_sel = [_riga(x) for x in sel.itertuples()]
+        # nuova regola: la giocata con la fiducia più alta della giornata, la stessa mostrata sotto la partita
+        chiavi_p = set(zip(prossima.casa, prossima.trasf))
+        cons_ = [p_ for p_ in partite if (p_["casa"], p_["trasf"]) in chiavi_p and p_.get("consiglio")]
+        cons_.sort(key=lambda p_: -p_["consiglio"]["p"])
+        righe_sel = []
+        for p_ in cons_[:3]:
+            c_ = p_["consiglio"]; x_ = prossima[(prossima.casa == p_["casa"]) & (prossima.trasf == p_["trasf"])].iloc[0]
+            righe_sel.append({"giornata": gg, "stagione": x_.stagione, "data": p_["data"], "ora": p_["ora"],
+                              "inizio": None if pd.isna(x_.kick) else pd.Timestamp(x_.kick).strftime("%Y-%m-%d %H:%M"),
+                              "partita": f"{p_['casa']} - {p_['trasf']}", "casa": p_["casa"], "trasf": p_["trasf"],
+                              "mercato": c_["mercato"], "esito": c_["esito"], "p": c_["p"],
+                              "quota": c_["quota_book"], "quota_giusta": c_["quota_giusta"],
+                              "fiducia": c_["fiducia"], "budget": c_["budget"]})
         if righe_sel:
             GIOCATA = {**righe_sel[0], "pubblicata": ADESSO.strftime("%Y-%m-%d %H:%M"),
-                       "regola": descrivi(REGOLA_OGGI), "congelata": False}
+                       "regola": "la giocata con la fiducia più alta della giornata", "congelata": False}
             giocate_reg = pd.concat([giocate_reg, pd.DataFrame([{k: v for k, v in GIOCATA.items() if k != "congelata"}])],
                                     ignore_index=True)
             ALTERNATIVE_GG = righe_sel[1:3]
@@ -1722,7 +1731,7 @@ dati = {
     },
     "storico": {"riepilogo": riep_storico, "ultime": ultime_storico, "giornate": giornate_st,
                 "giocate": {"riepilogo": riep_giocate, "elenco": elenco_giocate}},
-    "giocata": {"scelta": GIOCATA, "alternative": ALTERNATIVE_GG, "date": GIORNATA_DATE, "regola": descrivi(REGOLA_OGGI)},
+    "giocata": {"scelta": GIOCATA, "alternative": ALTERNATIVE_GG, "date": GIORNATA_DATE, "regola": "la giocata con la fiducia più alta della giornata"},
 }
 with open("docs/dati.json", "w", encoding="utf-8") as f:
     json.dump(senza_nan(dati), f, ensure_ascii=False, indent=1, default=str)
