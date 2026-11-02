@@ -171,18 +171,25 @@ def nome_squadra(n, note):
     import difflib
     simile = difflib.get_close_matches(n, list(note_), n=1, cutoff=0.6)
     return simile[0] if simile else n
+CAL_STAGIONE = pd.DataFrame()
 if not SIMULA_DAL:
     try:
         anno_cal = int("20" + COD_CORRENTE[:2])
         rc = requests.get(f"https://fixturedownload.com/feed/json/serie-a-{anno_cal}", timeout=30)
         cal = pd.DataFrame(rc.json())
         cal["quando"] = pd.to_datetime(cal["DateUtc"].str.replace("Z", "", regex=False), utc=True).dt.tz_convert("Europe/Rome").dt.tz_localize(None)
+        df_nomi = set(giocate.loc[(giocate.lega == PRINCIPALE) & (giocate.stagione == COD_CORRENTE), "casa"]) | \
+                  set(giocate.loc[(giocate.lega == PRINCIPALE) & (giocate.stagione == COD_CORRENTE), "trasf"])
+        # tutta la stagione con i nomi di football-data: serve allo storico (numero di giornata e risultati)
+        CAL_STAGIONE = pd.DataFrame({"stagione": COD_CORRENTE, "casa": [nome_squadra(x, None) for x in cal.HomeTeam],
+                                     "trasf": [nome_squadra(x, None) for x in cal.AwayTeam],
+                                     "giornata_cal": pd.to_numeric(cal.RoundNumber, errors="coerce"),
+                                     "gol_c_cal": pd.to_numeric(cal.HomeTeamScore, errors="coerce"),
+                                     "gol_t_cal": pd.to_numeric(cal.AwayTeamScore, errors="coerce")}).drop_duplicates(["casa", "trasf"])
         da_giocare = cal[cal["HomeTeamScore"].isna() & (cal.quando >= oggi)]
         if len(da_giocare):
             prossima = int(da_giocare.RoundNumber.min())
             g_ = da_giocare[da_giocare.RoundNumber == prossima]
-            df_nomi = set(giocate.loc[(giocate.lega == PRINCIPALE) & (giocate.stagione == COD_CORRENTE), "casa"]) | \
-                      set(giocate.loc[(giocate.lega == PRINCIPALE) & (giocate.stagione == COD_CORRENTE), "trasf"])
             extra = pd.DataFrame({"lega": PRINCIPALE, "stagione": COD_CORRENTE,
                                   "data": g_.quando.dt.normalize().values,
                                   "ora": g_.quando.dt.strftime("%H:%M").values,
@@ -1405,6 +1412,14 @@ if len(storico):
     storico = storico.drop(columns=[c for c in ["gol_c", "gol_t"] if c in storico])
     ris = giocate[giocate.lega == PRINCIPALE][["stagione", "casa", "trasf", "gol_c", "gol_t"]]
     storico = storico.merge(ris, on=["stagione", "casa", "trasf"], how="left")
+    if "giornata" not in storico:
+        storico["giornata"] = np.nan
+    if len(CAL_STAGIONE):
+        # numero di giornata e, se football-data è in ritardo, il risultato dal calendario completo
+        m_ = storico[["stagione", "casa", "trasf"]].merge(CAL_STAGIONE, on=["stagione", "casa", "trasf"], how="left")
+        storico["giornata"] = storico["giornata"].fillna(pd.Series(m_.giornata_cal.values, index=storico.index))
+        storico["gol_c"] = storico["gol_c"].fillna(pd.Series(m_.gol_c_cal.values, index=storico.index))
+        storico["gol_t"] = storico["gol_t"].fillna(pd.Series(m_.gol_t_cal.values, index=storico.index))
     storico.to_csv(F_STORICO, index=False)
 
 def valuta_storico(s):
@@ -1444,6 +1459,31 @@ def valuta_storico(s):
     return out, ultime
 
 riep_storico, ultime_storico = valuta_storico(storico) if len(storico) else ({"partite": 0}, [])
+
+def giornate_storico(s):
+    """Storico raggruppato per giornata: esito più probabile previsto, risultato vero, giusto/sbagliato."""
+    if not len(s) or "giornata" not in s:
+        return []
+    out = []
+    for g, grp in s[s.giornata.notna()].groupby("giornata"):
+        partite = []
+        for r in grp.sort_values(["data", "casa"]).itertuples():
+            pr_ = {"1": r.p1, "X": r.pX, "2": r.p2}
+            prev = max(pr_, key=pr_.get)
+            fatto = pd.notna(r.gol_c) and pd.notna(r.gol_t)
+            es = (("1" if r.gol_c > r.gol_t else "X" if r.gol_c == r.gol_t else "2") if fatto else None)
+            partite.append({"data": r.data, "casa": r.casa, "trasf": r.trasf, "previsto": prev,
+                            "p": round(float(pr_[prev]), 3),
+                            "risultato": f"{int(r.gol_c)}-{int(r.gol_t)}" if fatto else None,
+                            "esito": es, "ok": (prev == es) if fatto else None})
+        fatte = [p for p in partite if p["ok"] is not None]
+        az = sum(1 for p in fatte if p["ok"])
+        out.append({"giornata": int(g), "dal": min(p["data"] for p in partite), "al": max(p["data"] for p in partite),
+                    "partite": partite, "giocate": len(fatte), "azzeccate": az,
+                    "percentuale": round(az / len(fatte), 3) if fatte else None})
+    return sorted(out, key=lambda x: -x["giornata"])
+
+giornate_st = giornate_storico(storico) if len(storico) else []
 
 def valuta_giocate(g):
     if not len(g):
@@ -1502,7 +1542,7 @@ dati = {
         "per_stagione": PER_STAGIONE,
         "giocata_giornata": {"confronto": GG_CONFRONTO, "per_stagione": GG_STAGIONI, "regola_oggi": descrivi(REGOLA_OGGI)},
     },
-    "storico": {"riepilogo": riep_storico, "ultime": ultime_storico,
+    "storico": {"riepilogo": riep_storico, "ultime": ultime_storico, "giornate": giornate_st,
                 "giocate": {"riepilogo": riep_giocate, "elenco": elenco_giocate}},
     "giocata": {"scelta": GIOCATA, "alternative": ALTERNATIVE_GG, "date": GIORNATA_DATE, "regola": descrivi(REGOLA_OGGI)},
 }

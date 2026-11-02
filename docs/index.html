@@ -222,6 +222,24 @@ footer a{color:var(--lime)}
   nav button[aria-selected="true"]::before{left:7px;width:12px;height:12px}
   nav button[aria-selected="true"]{background:var(--lime)}
 }
+/* storico per giornata */
+details.giornata-st{border:1px solid rgba(255,255,255,.18);background:rgba(9,15,42,.88);margin:8px 0;border-radius:4px}
+details.giornata-st>summary{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;padding:12px 14px;cursor:pointer}
+details.giornata-st[open]>summary{border-bottom:1px solid var(--griglia)}
+.g-num{font:600 1.15rem var(--cond);text-transform:uppercase;letter-spacing:.03em}
+.g-date{color:var(--tenue);font-size:.85rem}
+.g-ris{font:500 1rem var(--cond)}.g-ris small{color:var(--tenue);font-family:var(--testo);font-size:.75rem}
+.g-per{font:600 1.05rem var(--cond);padding:3px 10px;border-radius:3px;min-width:56px;text-align:center;background:rgba(255,255,255,.1)}
+.g-per.su{background:var(--lime);color:#0B1230}.g-per.giu{background:var(--ko);color:#0B1230}
+table.tab-st td{vertical-align:middle}
+table.tab-st td small{display:block;color:var(--tenue);font-size:.72rem}
+table.tab-st td:nth-child(2) small,table.tab-st td:nth-child(3) small{display:inline}
+table.tab-st th:nth-child(2),table.tab-st td:nth-child(2),table.tab-st th:nth-child(3),table.tab-st td:nth-child(3){text-align:left}
+tr.r-ok td{background:rgba(124,255,26,.13)}tr.r-ko td{background:rgba(255,92,122,.14)}
+tr.r-ok td:first-child{box-shadow:inset 4px 0 0 var(--lime)}tr.r-ko td:first-child{box-shadow:inset 4px 0 0 var(--ko)}
+td.segno{font-weight:800;font-size:1.1rem;text-align:center}
+tr.r-ok td.segno{color:var(--lime)}tr.r-ko td.segno{color:var(--ko)}tr.r-attesa td.segno{color:var(--tenue)}
+@media (max-width:520px){details.giornata-st>summary{grid-template-columns:1fr auto;row-gap:2px}.g-date{grid-column:1}.g-ris{grid-column:2;grid-row:1}}
 /* perché questo pronostico */
 .perche{margin:10px 0 14px}
 .perche h3{margin:8px 0 6px;color:var(--lime)}
@@ -691,7 +709,7 @@ function vistaStorico(){
   const r = D.storico.riepilogo || {}, u = D.storico.ultime || [];
   const testa = sezioneSimulazione() + sezioneStoricoGiocate();
   if (!r.partite) return testa + `<h2>Tutte le previsioni</h2><div class="vuoto"><strong>Ancora nessuna partita valutata</strong>
-    Dopo la prima giornata giocata con il modello attivo, qui trovi come sono andate le previsioni.</div>`;
+    Dopo la prima giornata giocata con il modello attivo, qui trovi come sono andate le previsioni.</div>` + sezioneGiornate();
   return testa + `<h2>Come sono andate le previsioni</h2>
     <p class="lead">Previsioni salvate prima di ogni partita e confrontate con il risultato vero.</p>
     <div class="cifre">
@@ -701,10 +719,36 @@ function vistaStorico(){
       ${r.giocate_valore ? `<div><b>${r.profitto_unita > 0 ? "+" : ""}${String(r.profitto_unita).replace(".", ",")}</b><span>unità sulle ${r.giocate_valore} giocate con valore (${r.giocate_vinte} vinte)</span></div>` : ""}
     </div>
     ${r.log_loss_bookmaker ? `<p class="lead">Errore medio 1-X-2: modello ${r.log_loss_modello_stesse.toFixed(4)}, bookmaker ${r.log_loss_bookmaker.toFixed(4)} (più basso è meglio).</p>` : ""}
-    <div class="scroll"><table><thead><tr><th>Partita</th><th>Ris.</th><th>Previsto</th><th>Giocata con valore</th></tr></thead><tbody>
-    ${u.map(m => `<tr><td>${esc(m.casa)} – ${esc(m.trasf)}</td><td>${esc(m.risultato)}</td>
-      <td class="${m.previsto === m.esito ? "esito-ok" : "esito-ko"}">${esc(m.previsto)}</td><td>${esc(m.pick) || "—"}</td></tr>`).join("")}
-    </tbody></table></div>`;
+    ${sezioneGiornate()}`;
+}
+
+function giornoBreve(d){ const [y, m, g] = String(d).split("-"); return `${+g} ${MESI[+m-1]}`; }
+function sezioneGiornate(){
+  const G = (D.storico && D.storico.giornate) || [];
+  if (!G.length) return "";
+  const tot = G.reduce((a, g) => [a[0] + g.azzeccate, a[1] + g.giocate], [0, 0]);
+  return `<h2>Giornata per giornata</h2>
+    <p class="lead">Per ogni partita: l'esito 1-X-2 che il modello dava come più probabile prima del fischio d'inizio e il risultato finale.
+      In totale <b>${tot[0]} su ${tot[1]}</b> (${tot[1] ? Math.round(tot[0] / tot[1] * 100) : 0}%).</p>
+    ${G.map((g, i) => {
+      const per = g.percentuale == null ? "—" : Math.round(g.percentuale * 100) + "%";
+      const cl = g.percentuale == null ? "" : g.percentuale >= 0.5 ? "su" : "giu";
+      const periodo = g.dal === g.al ? giornoBreve(g.dal) : `${giornoBreve(g.dal)} – ${giornoBreve(g.al)}`;
+      return `<details class="giornata-st"${i === 0 ? " open" : ""}><summary>
+        <span class="g-num">Giornata ${g.giornata}</span><span class="g-date">${periodo}</span>
+        <span class="g-ris">${g.azzeccate}/${g.giocate}${g.giocate < g.partite.length ? ` <small>(${g.partite.length - g.giocate} da giocare)</small>` : ""}</span>
+        <span class="g-per ${cl}">${per}</span></summary>
+        <div class="scroll"><table class="tab-st"><thead><tr><th>Partita</th><th>Previsto</th><th>Risultato</th><th></th></tr></thead><tbody>
+        ${g.partite.map(p => {
+          const st = p.ok == null ? "attesa" : p.ok ? "ok" : "ko";
+          const nome = p.previsto === "1" ? p.casa : p.previsto === "2" ? p.trasf : "pareggio";
+          return `<tr class="r-${st}"><td>${esc(p.casa)} – ${esc(p.trasf)}<small>${giornoBreve(p.data)}</small></td>
+            <td><b>${esc(p.previsto)}</b> ${esc(nome)} <small>${pct(p.p)}</small></td>
+            <td>${p.risultato ? `<b>${esc(p.risultato)}</b> <small>(${esc(p.esito)})</small>` : "—"}</td>
+            <td class="segno">${st === "ok" ? "✓" : st === "ko" ? "✗" : "…"}</td></tr>`;
+        }).join("")}
+        </tbody></table></div></details>`;
+    }).join("")}`;
 }
 
 function mostra(v){
