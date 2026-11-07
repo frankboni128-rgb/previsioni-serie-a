@@ -1,562 +1,10 @@
 {
- "aggiornato": "2026-11-06 14:12",
+ "aggiornato": "2026-11-07 13:04",
  "stagione": "2026/27",
  "note": [
   "Expected goals (Understat) non disponibili in questo aggiornamento: modello un po' meno preciso."
  ],
  "partite": [
-  {
-   "data": "2026-11-06",
-   "ora": "20:45",
-   "casa": "Venezia",
-   "trasf": "Udinese",
-   "valori_usati": true,
-   "gol_attesi": 2.85,
-   "mercati": {
-    "1X2": [
-     {
-      "esito": "1",
-      "p": 0.4126,
-      "quota_giusta": 2.42,
-      "quota_book": 2.3,
-      "valore": -0.051
-     },
-     {
-      "esito": "X",
-      "p": 0.2952,
-      "quota_giusta": 3.39,
-      "quota_book": 3.4,
-      "valore": 0.004
-     },
-     {
-      "esito": "2",
-      "p": 0.2922,
-      "quota_giusta": 3.42,
-      "quota_book": 3.1,
-      "valore": -0.094
-     }
-    ],
-    "Doppia chance": [
-     {
-      "esito": "1X",
-      "p": 0.7078,
-      "quota_giusta": 1.41,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X2",
-      "p": 0.5874,
-      "quota_giusta": 1.7,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "12",
-      "p": 0.7048,
-      "quota_giusta": 1.42,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Under/Over": [
-     {
-      "esito": "Under 0.5",
-      "p": 0.0685,
-      "quota_giusta": 14.59,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 0.5",
-      "p": 0.9315,
-      "quota_giusta": 1.07,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Under 1.5",
-      "p": 0.2111,
-      "quota_giusta": 4.74,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 1.5",
-      "p": 0.7889,
-      "quota_giusta": 1.27,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Under 2.5",
-      "p": 0.4567,
-      "quota_giusta": 2.19,
-      "quota_book": 2.0,
-      "valore": -0.087
-     },
-     {
-      "esito": "Over 2.5",
-      "p": 0.5433,
-      "quota_giusta": 1.84,
-      "quota_book": 1.8,
-      "valore": -0.022
-     },
-     {
-      "esito": "Under 3.5",
-      "p": 0.6799,
-      "quota_giusta": 1.47,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 3.5",
-      "p": 0.3201,
-      "quota_giusta": 3.12,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Under 4.5",
-      "p": 0.8392,
-      "quota_giusta": 1.19,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "Over 4.5",
-      "p": 0.1608,
-      "quota_giusta": 6.22,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Goal/No Goal": [
-     {
-      "esito": "Goal",
-      "p": 0.5838,
-      "quota_giusta": 1.71,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "No Goal",
-      "p": 0.4162,
-      "quota_giusta": 2.4,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Multigol": [
-     {
-      "esito": "1-2",
-      "p": 0.3881,
-      "quota_giusta": 2.58,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-3",
-      "p": 0.6114,
-      "quota_giusta": 1.64,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-4",
-      "p": 0.7706,
-      "quota_giusta": 1.3,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-5",
-      "p": 0.8615,
-      "quota_giusta": 1.16,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-3",
-      "p": 0.4688,
-      "quota_giusta": 2.13,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-4",
-      "p": 0.6281,
-      "quota_giusta": 1.59,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-5",
-      "p": 0.719,
-      "quota_giusta": 1.39,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3-4",
-      "p": 0.3825,
-      "quota_giusta": 2.61,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3-5",
-      "p": 0.4734,
-      "quota_giusta": 2.11,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "4-6",
-      "p": 0.2934,
-      "quota_giusta": 3.41,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Somma gol": [
-     {
-      "esito": "0",
-      "p": 0.0685,
-      "quota_giusta": 14.59,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1",
-      "p": 0.1426,
-      "quota_giusta": 7.01,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.2456,
-      "quota_giusta": 4.07,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3",
-      "p": 0.2232,
-      "quota_giusta": 4.48,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "4",
-      "p": 0.1593,
-      "quota_giusta": 6.28,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "5",
-      "p": 0.0909,
-      "quota_giusta": 11.0,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "6+",
-      "p": 0.0699,
-      "quota_giusta": 14.3,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa -2": [
-     {
-      "esito": "1",
-      "p": 0.0893,
-      "quota_giusta": 11.2,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.1319,
-      "quota_giusta": 7.58,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.7788,
-      "quota_giusta": 1.28,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa -1": [
-     {
-      "esito": "1",
-      "p": 0.2212,
-      "quota_giusta": 4.52,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.2066,
-      "quota_giusta": 4.84,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.5722,
-      "quota_giusta": 1.75,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa +1": [
-     {
-      "esito": "1",
-      "p": 0.697,
-      "quota_giusta": 1.43,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.1679,
-      "quota_giusta": 5.96,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.1351,
-      "quota_giusta": 7.4,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Handicap casa +2": [
-     {
-      "esito": "1",
-      "p": 0.8649,
-      "quota_giusta": 1.16,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "X",
-      "p": 0.0892,
-      "quota_giusta": 11.21,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2",
-      "p": 0.0459,
-      "quota_giusta": 21.79,
-      "quota_book": null,
-      "valore": null
-     }
-    ],
-    "Risultato esatto": [
-     {
-      "esito": "1-1",
-      "p": 0.1271,
-      "quota_giusta": 7.87,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-1",
-      "p": 0.091,
-      "quota_giusta": 10.99,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-0",
-      "p": 0.0793,
-      "quota_giusta": 12.61,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "1-2",
-      "p": 0.0748,
-      "quota_giusta": 13.37,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-0",
-      "p": 0.0707,
-      "quota_giusta": 14.15,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "0-0",
-      "p": 0.0685,
-      "quota_giusta": 14.59,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "0-1",
-      "p": 0.0633,
-      "quota_giusta": 15.81,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "2-2",
-      "p": 0.0586,
-      "quota_giusta": 17.07,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "0-2",
-      "p": 0.0478,
-      "quota_giusta": 20.93,
-      "quota_book": null,
-      "valore": null
-     },
-     {
-      "esito": "3-1",
-      "p": 0.0475,
-      "quota_giusta": 21.05,
-      "quota_book": null,
-      "valore": null
-     }
-    ]
-   },
-   "analisi": {
-    "casa": {
-     "forma": "PVPPP",
-     "punti_5": 3,
-     "gf_5": 0.4,
-     "gs_5": 1.4,
-     "xf_5": null,
-     "xs_5": null,
-     "over_10": 3,
-     "goal_10": 3,
-     "porta_inviolata_10": 1,
-     "a_secco_10": 6,
-     "n_10": 10,
-     "luogo": "in casa",
-     "luogo_vnp": [
-      1,
-      0,
-      4
-     ],
-     "luogo_gf": 0.6,
-     "luogo_gs": 2.0,
-     "pos_attacco": 20,
-     "pos_difesa": 14,
-     "squadre": 20,
-     "forza": [],
-     "debole": [
-      "Attacco tra i meno prolifici (20° su 20, 0,6 gol a partita)",
-      "Momento negativo: 3 punti nelle ultime 5 (PVPPP)",
-      "Fatica in casa: 4 sconfitte su 5 quest'anno",
-      "A secco in 6 delle ultime 10"
-     ]
-    },
-    "trasf": {
-     "forma": "PPPNP",
-     "punti_5": 1,
-     "gf_5": 0.6,
-     "gs_5": 2.4,
-     "xf_5": null,
-     "xs_5": null,
-     "over_10": 6,
-     "goal_10": 6,
-     "porta_inviolata_10": 1,
-     "a_secco_10": 4,
-     "n_10": 10,
-     "luogo": "in trasferta",
-     "luogo_vnp": [
-      1,
-      1,
-      2
-     ],
-     "luogo_gf": 1.8,
-     "luogo_gs": 2.2,
-     "pos_attacco": 15,
-     "pos_difesa": 17,
-     "squadre": 20,
-     "forza": [],
-     "debole": [
-      "Difesa tra le più battute (17° su 20, 2,3 gol subiti a partita)",
-      "Momento negativo: 1 punti nelle ultime 5 (PPPNP)",
-      "Fatica in trasferta: 2 sconfitte su 4 quest'anno",
-      "A secco in 4 delle ultime 10"
-     ]
-    },
-    "chiavi": [
-     "Per il modello l'esito sui gol più probabile è Goal (58%)."
-    ]
-   },
-   "spiegazione": {
-    "frase": "Favorita per il modello: Venezia (41%), soprattutto per pi-ratings. A favore di Udinese invece: le quote dei bookmaker (31% di probabilità).",
-    "fattori": [
-     {
-      "fattore": "Quote dei bookmaker",
-      "peso": -0.114,
-      "quota": 0.562,
-      "verso": "Udinese"
-     },
-     {
-      "fattore": "Pi-ratings",
-      "peso": 0.079,
-      "quota": 0.389,
-      "verso": "Venezia"
-     },
-     {
-      "fattore": "Valore delle rose",
-      "peso": -0.01,
-      "quota": 0.049,
-      "verso": "Udinese"
-     }
-    ],
-    "dati": {
-     "book": [
-      0.4135,
-      0.2797,
-      0.3068
-     ],
-     "valore_casa": 120,
-     "valore_trasf": 159,
-     "diff_xg": null
-    }
-   },
-   "consiglio": {
-    "mercato": "Goal/No Goal",
-    "esito": "Goal",
-    "p": 0.584,
-    "quota_giusta": 1.71,
-    "quota_book": null,
-    "fiducia": "bassa",
-    "budget": 1.0,
-    "storico_fascia": {
-     "partite": 777,
-     "uscite": 0.615
-    }
-   },
-   "racconto": [
-    "Venezia arriva in difficoltà: 3 punti nelle ultime cinque (P-V-P-P-P); in casa quest'anno ha raccolto 1 vittoria, 0 pareggi e 4 sconfitte. Udinese arriva in difficoltà: 1 punto nelle ultime cinque (P-P-P-N-P); in trasferta quest'anno ha raccolto 1 vittoria, 1 pareggio e 2 sconfitte.",
-    "Ci aspettiamo una partita dal punteggio incerto, che può prendere qualsiasi direzione. Il modello stima 1,6 gol attesi per Venezia e 1,3 per Udinese, un equilibrio che si riflette anche nel pronostico. Over 2.5 al 54%, entrambe a segno al 58%. Nelle loro ultime partite l'Over è uscito 9 volte su 20 e il Goal 9 su 20.",
-    "Sul segno il modello vede avanti Venezia (41%), con il pareggio al 30% e Udinese al 29%. A spingere verso Venezia sono soprattutto pi-ratings. L'unico segnale a favore di Udinese viene da quote dei bookmaker, non abbastanza per ribaltare il quadro.",
-    "Negli ultimi 4 precedenti in Serie A: 1 vittoria di Venezia, 0 pareggi, 3 di Udinese. I più recenti: Venezia–Udinese 1-2 (2022), Venezia–Udinese 3-2 (2024), Udinese–Venezia 3-2 (2025). I precedenti contano poco nel modello, ma danno il polso della sfida.",
-    "In sintesi: la giocata più solida è Goal (Goal/No Goal) al 58%, fiducia bassa, 1% del budget. Risultato esatto più probabile: 1-1 o 2-1."
-   ],
-   "giornata_key": "2026-45W"
-  },
   {
    "data": "2026-11-07",
    "ora": "15:00",
@@ -5734,9 +5182,9 @@
     "errore_chiusura_serie_a": 0.9742,
     "errore_modello_su_chiusura_serie_a": 0.9766,
     "clv_serie_a": -0.0339,
-    "resa_serie_a": 0.0594,
-    "giocate_serie_a": 1082,
-    "kelly_serie_a": 187.96
+    "resa_serie_a": 0.0647,
+    "giocate_serie_a": 1085,
+    "kelly_serie_a": 177.15
    }
   ],
   "copertura_formazioni": {
@@ -11715,18 +11163,28 @@
  },
  "storico": {
   "riepilogo": {
-   "partite": 50,
-   "esito_azzeccato": 0.7,
+   "partite": 51,
+   "esito_azzeccato": 0.706,
    "log_loss_modello": 0.8826,
-   "log_loss_bookmaker": 0.8958,
-   "log_loss_modello_stesse": 0.9023,
-   "over25_azzeccato": 0.62,
+   "log_loss_bookmaker": 0.8955,
+   "log_loss_modello_stesse": 0.9019,
+   "over25_azzeccato": 0.627,
    "giocate_valore": 5,
    "giocate_vinte": 0,
    "profitto_unita": -5.0,
    "roi": -1.0
   },
   "ultime": [
+   {
+    "data": "2026-11-06",
+    "casa": "Venezia",
+    "trasf": "Udinese",
+    "risultato": "2-1",
+    "esito": "1",
+    "previsto": "1",
+    "p_esito": 0.413,
+    "pick": ""
+   },
    {
     "data": "2026-11-02",
     "casa": "Sassuolo",
@@ -11829,22 +11287,22 @@
    },
    {
     "data": "2026-10-29",
-    "casa": "Frosinone",
-    "trasf": "Lecce",
-    "risultato": "5-1",
-    "esito": "1",
-    "previsto": "1",
-    "p_esito": 0.564,
-    "pick": ""
-   },
-   {
-    "data": "2026-10-29",
     "casa": "Fiorentina",
     "trasf": "Atalanta",
     "risultato": "2-2",
     "esito": "X",
     "previsto": "1",
     "p_esito": 0.291,
+    "pick": ""
+   },
+   {
+    "data": "2026-10-29",
+    "casa": "Frosinone",
+    "trasf": "Lecce",
+    "risultato": "5-1",
+    "esito": "1",
+    "previsto": "1",
+    "p_esito": 0.564,
     "pick": ""
    },
    {
@@ -12116,16 +11574,6 @@
     "previsto": "2",
     "p_esito": 0.171,
     "pick": ""
-   },
-   {
-    "data": "2026-10-16",
-    "casa": "Frosinone",
-    "trasf": "Sassuolo",
-    "risultato": "4-2",
-    "esito": "1",
-    "previsto": "1",
-    "p_esito": 0.382,
-    "pick": "1X2 X"
    }
   ],
   "giornate": [
@@ -12141,8 +11589,8 @@
       "mercato": "Goal/No Goal",
       "giocata": "Goal",
       "p": 0.584,
-      "risultato": null,
-      "ok": null
+      "risultato": "2-1",
+      "ok": true
      },
      {
       "data": "2026-11-07",
@@ -12235,14 +11683,14 @@
       "ok": null
      }
     ],
-    "giocate": 0,
-    "azzeccate": 0,
-    "percentuale": null,
+    "giocate": 1,
+    "azzeccate": 1,
+    "percentuale": 1.0,
     "budget": {
      "inizio": 106.61,
-     "fine": 106.61,
-     "giocate": 0,
-     "stimate": 0
+     "fine": 107.24,
+     "giocate": 1,
+     "stimate": 1
     }
    },
    {
@@ -12596,7 +12044,7 @@
   ],
   "budget_simulato": {
    "partenza": 100.0,
-   "attuale": 106.61
+   "attuale": 107.24
   },
   "giocate": {
    "riepilogo": {
@@ -12647,53 +12095,22 @@
    "stagione": "2627",
    "data": "2026-11-08",
    "ora": "15:00",
-   "inizio": "2026-11-08 15:00",
    "partita": "Genoa - Milan",
    "casa": "Genoa",
    "trasf": "Milan",
    "mercato": "1X2",
-   "esito": "2",
+   "esito": 2,
    "p": 0.5494,
    "quota": 1.8,
    "quota_giusta": 1.82,
    "pubblicata": "2026-11-06 14:12",
    "regola": "quota almeno 1,70, mercati 1X2, valore almeno -3%",
-   "congelata": false
+   "inizio": "2026-11-08 15:00",
+   "congelata": true
   },
-  "alternative": [
-   {
-    "giornata": "2026-45W",
-    "stagione": "2627",
-    "data": "2026-11-07",
-    "ora": "18:00",
-    "inizio": "2026-11-07 18:00",
-    "partita": "Parma - Bologna",
-    "casa": "Parma",
-    "trasf": "Bologna",
-    "mercato": "1X2",
-    "esito": "2",
-    "p": 0.5463,
-    "quota": 1.83,
-    "quota_giusta": 1.83
-   },
-   {
-    "giornata": "2026-45W",
-    "stagione": "2627",
-    "data": "2026-11-07",
-    "ora": "15:00",
-    "inizio": "2026-11-07 15:00",
-    "partita": "Torino - Lecce",
-    "casa": "Torino",
-    "trasf": "Lecce",
-    "mercato": "1X2",
-    "esito": "1",
-    "p": 0.5444,
-    "quota": 1.8,
-    "quota_giusta": 1.84
-   }
-  ],
+  "alternative": [],
   "date": [
-   "2026-11-06",
+   "2026-11-07",
    "2026-11-08"
   ],
   "regola": "quota almeno 1,70, mercati 1X2, valore almeno -3%"
