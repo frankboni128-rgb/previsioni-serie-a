@@ -1,5 +1,5 @@
 {
- "aggiornato": "2026-11-11 14:03",
+ "aggiornato": "2026-11-12 15:05",
  "stagione": "2026/27",
  "note": [
   "Expected goals (Understat) non disponibili in questo aggiornamento: modello un po' meno preciso."
@@ -5683,10 +5683,10 @@
     "errore_serie_a": 0.9769,
     "errore_chiusura_serie_a": 0.9742,
     "errore_modello_su_chiusura_serie_a": 0.9769,
-    "clv_serie_a": -0.0344,
-    "resa_serie_a": 0.0688,
-    "giocate_serie_a": 1077,
-    "kelly_serie_a": 172.99
+    "clv_serie_a": -0.0341,
+    "resa_serie_a": 0.0637,
+    "giocate_serie_a": 1085,
+    "kelly_serie_a": 174.59
    }
   ],
   "copertura_formazioni": {
