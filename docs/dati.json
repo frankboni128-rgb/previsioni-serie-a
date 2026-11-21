@@ -1,5 +1,5 @@
 {
- "aggiornato": "2026-11-20 15:21",
+ "aggiornato": "2026-11-21 14:51",
  "stagione": "2026/27",
  "note": [
   "Expected goals (Understat) non disponibili in questo aggiornamento: modello un po' meno preciso."
@@ -5720,13 +5720,13 @@
    {
     "versione": "Semplice + modello bayesiano (solo Serie A)",
     "variabili": 8,
-    "errore_serie_a": 0.9766,
+    "errore_serie_a": 0.9769,
     "errore_chiusura_serie_a": 0.9742,
-    "errore_modello_su_chiusura_serie_a": 0.9766,
-    "clv_serie_a": -0.0341,
-    "resa_serie_a": 0.0663,
-    "giocate_serie_a": 1077,
-    "kelly_serie_a": 209.11
+    "errore_modello_su_chiusura_serie_a": 0.9769,
+    "clv_serie_a": -0.0346,
+    "resa_serie_a": 0.0801,
+    "giocate_serie_a": 1089,
+    "kelly_serie_a": 216.74
    }
   ],
   "copertura_formazioni": {
@@ -12707,39 +12707,39 @@
   "giocate": {
    "riepilogo": {
     "giocate": 5,
-    "vinte": 2,
-    "unita": -0.8,
-    "resa": -0.17
+    "vinte": 4,
+    "unita": 3.4,
+    "resa": 0.67
    },
    "elenco": [
     {
      "data": "2026-11-08",
      "partita": "Genoa - Milan",
-     "giocata": 2,
+     "giocata": "2",
      "quota": 1.8,
      "risultato": "1-2",
-     "vinta": false
+     "vinta": true
     },
     {
      "data": "2026-11-01",
      "partita": "Lecce - Genoa",
-     "giocata": 2,
+     "giocata": "2",
      "quota": 2.35,
      "risultato": "1-2",
-     "vinta": false
+     "vinta": true
     },
     {
      "data": "2026-10-28",
      "partita": "Monza - Napoli",
-     "giocata": 2,
+     "giocata": "2",
      "quota": 1.75,
      "risultato": "1-4",
-     "vinta": false
+     "vinta": true
     },
     {
      "data": "2026-10-24",
      "partita": "Cagliari - Bologna",
-     "giocata": 2,
+     "giocata": "2",
      "quota": 2.45,
      "risultato": "0-2",
      "vinta": true
@@ -12747,10 +12747,10 @@
     {
      "data": "2026-10-17",
      "partita": "Venezia - Napoli",
-     "giocata": 2,
+     "giocata": "2",
      "quota": 1.7,
      "risultato": "1-0",
-     "vinta": true
+     "vinta": false
     }
    ]
   }
@@ -12761,7 +12761,6 @@
    "stagione": "2627",
    "data": "2026-11-23",
    "ora": "20:45",
-   "inizio": "2026-11-23 20:45",
    "partita": "Monza - Fiorentina",
    "casa": "Monza",
    "trasf": "Fiorentina",
@@ -12772,40 +12771,10 @@
    "quota_giusta": 3.78,
    "pubblicata": "2026-11-20 15:21",
    "regola": "quota almeno 1,70, mercati 1X2, valore almeno -3%",
-   "congelata": false
+   "inizio": "2026-11-23 20:45",
+   "congelata": true
   },
-  "alternative": [
-   {
-    "giornata": "2026-47W",
-    "stagione": "2627",
-    "data": "2026-11-22",
-    "ora": "15:00",
-    "inizio": "2026-11-22 15:00",
-    "partita": "Bologna - Udinese",
-    "casa": "Bologna",
-    "trasf": "Udinese",
-    "mercato": "1X2",
-    "esito": "X",
-    "p": 0.2587,
-    "quota": 3.75,
-    "quota_giusta": 3.87
-   },
-   {
-    "giornata": "2026-47W",
-    "stagione": "2627",
-    "data": "2026-11-22",
-    "ora": "18:00",
-    "inizio": "2026-11-22 18:00",
-    "partita": "Milan - Frosinone",
-    "casa": "Milan",
-    "trasf": "Frosinone",
-    "mercato": "1X2",
-    "esito": "X",
-    "p": 0.2203,
-    "quota": 4.5,
-    "quota_giusta": 4.54
-   }
-  ],
+  "alternative": [],
   "date": [
    "2026-11-21",
    "2026-11-23"
